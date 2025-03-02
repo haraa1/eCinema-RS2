@@ -36,6 +36,8 @@ namespace eCinema.Models
                 entity.Property(e => e.DurationMinutes).IsRequired();
                 entity.Property(e => e.Language).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.ReleaseDate).IsRequired();
+                entity.Property(e => e.Status).IsRequired();
+                entity.Property(e => e.PgRating).IsRequired();
             });
            
             modelBuilder.Entity<Genre>(entity =>

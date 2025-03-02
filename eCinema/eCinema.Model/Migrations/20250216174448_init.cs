@@ -63,7 +63,9 @@ namespace eCinema.Models.Migrations
                     Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     DurationMinutes = table.Column<int>(type: "int", nullable: false),
                     Language = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    PgRating = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
