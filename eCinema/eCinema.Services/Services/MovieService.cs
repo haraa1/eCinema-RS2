@@ -3,6 +3,7 @@ using eCinema.Model.Entities;
 using eCinema.Models;
 using eCinema.Models.DTOs.Movies;
 using eCinema.Models.SearchObjects;
+using eCinema.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace eCinema.Services
+namespace eCinema.Services.Services
 {
     public class MovieService : BaseCRUDService<MovieDto, Movie, MovieSearch, MovieInsertDto, MovieUpdateDto>, IMovieService
     {
@@ -30,6 +31,6 @@ namespace eCinema.Services
             return filteredQuery;
         }
 
-        
+
     }
 }

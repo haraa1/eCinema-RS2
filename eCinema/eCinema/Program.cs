@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using eCinema.Models;
-using eCinema.Services;
 using eCinema.Models.Mappings;
+using eCinema.Services.Services;
+using eCinema.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

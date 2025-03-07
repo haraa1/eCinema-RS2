@@ -6,10 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace eCinema.Services
+namespace eCinema.Services.Interfaces
 {
     public interface IMovieService : ICRUDService<MovieDto, MovieSearch, MovieInsertDto, MovieUpdateDto>
     {
-       
+
     }
 }

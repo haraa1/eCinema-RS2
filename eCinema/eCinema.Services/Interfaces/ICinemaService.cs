@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace eCinema.Services
+namespace eCinema.Services.Interfaces
 {
     public interface ICinemaService : ICRUDService<CinemaDto, CinemaSearch, CinemaInsertDto, CinemaUpdateDto>
     {

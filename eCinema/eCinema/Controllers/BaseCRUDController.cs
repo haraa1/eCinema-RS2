@@ -1,4 +1,4 @@
-﻿using eCinema.Services;
+﻿using eCinema.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eCinema.Controllers

@@ -9,8 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using eCinema.Models.DTOs.Cinemas;
+using eCinema.Services.Interfaces;
 
-namespace eCinema.Services
+namespace eCinema.Services.Services
 {
     public class CinemaService : BaseCRUDService<CinemaDto, Cinema, CinemaSearch, CinemaInsertDto, CinemaUpdateDto>, ICinemaService
     {

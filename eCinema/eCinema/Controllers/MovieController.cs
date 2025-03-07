@@ -1,6 +1,6 @@
 ﻿using eCinema.Models.DTOs.Movies;
 using eCinema.Models.SearchObjects;
-using eCinema.Services;
+using eCinema.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eCinema.Controllers
