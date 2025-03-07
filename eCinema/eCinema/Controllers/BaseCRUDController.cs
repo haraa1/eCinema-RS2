@@ -28,5 +28,16 @@ namespace eCinema.Controllers
             return await _service.Update(id, update);
         }
 
+        [HttpDelete("{id}")]
+        public virtual async Task<IActionResult> Delete(int id)
+        {
+            var success = await _service.Delete(id);
+            if (!success)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+
     }
 }

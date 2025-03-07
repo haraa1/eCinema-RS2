@@ -47,5 +47,18 @@ namespace eCinema.Services
             return _mapper.Map<T>(entity);
         }
 
+        public virtual async Task<bool> Delete(int id)
+        {
+            var set = _context.Set<TDb>();
+
+            var entity = await set.FindAsync(id);
+
+            set.Remove(entity);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
     }
 }
