@@ -13,7 +13,7 @@ namespace eCinema.Models.Mappings
     {
         public MovieProfile()
         {
-            CreateMap<Movie, MovieDto>();
+            CreateMap<Movie, MovieDto>().ForMember(dest => dest.ActorIds, opt => opt.MapFrom(src => src.MovieActors.Select(ma => ma.ActorId)));
             CreateMap<MovieInsertDto, Movie>();
             CreateMap<MovieUpdateDto, Movie>();
         }

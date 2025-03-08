@@ -31,6 +31,21 @@ namespace eCinema.Services.Services
             return filteredQuery;
         }
 
+        public override async Task BeforeInsert(Movie entity, MovieInsertDto insert)
+        {
+            if (insert.ActorIds != null && insert.ActorIds.Any())
+            {
+                foreach (var actorId in insert.ActorIds)
+                {
+                    entity.MovieActors.Add(new MovieActor { ActorId = actorId });
+                }
+            }                       
+        }
+        public override IQueryable<Movie> AddInclude(IQueryable<Movie> query, MovieSearch? search = null)
+        {
+            return query.Include(m => m.MovieActors);
+        }
+
 
     }
 }

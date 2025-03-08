@@ -1,4 +1,5 @@
-﻿using eCinema.Models.Enums;
+﻿using eCinema.Model.Entities;
+using eCinema.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +17,6 @@ namespace eCinema.Models.DTOs.Movies
         public DateTime ReleaseDate { get; set; }
         public MovieStatus Status { get; set; }
         public PgRating PgRating { get; set; }
+        public List<int> ActorIds { get; set; }
     }
 }
