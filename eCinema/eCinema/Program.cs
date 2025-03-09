@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddTransient<IMovieService, MovieService>();
 builder.Services.AddTransient<ICinemaService,CinemaService>();
 builder.Services.AddTransient<IActorService, ActorService>();
+builder.Services.AddTransient<IGenreService, GenreService>();
 
 // Add services to the container.
 builder.Services.AddDbContext<eCinemaDbContext>(options =>
@@ -17,6 +18,7 @@ builder.Services.AddDbContext<eCinemaDbContext>(options =>
 builder.Services.AddAutoMapper(typeof(MovieProfile));
 builder.Services.AddAutoMapper(typeof(CinemaProfile));
 builder.Services.AddAutoMapper(typeof(ActorService));
+builder.Services.AddAutoMapper(typeof(GenreService));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
