@@ -39,11 +39,20 @@ namespace eCinema.Services.Services
                 {
                     entity.MovieActors.Add(new MovieActor { ActorId = actorId });
                 }
-            }                       
+            }
+            
+            if(insert.GenreIds != null && insert.GenreIds.Any())
+            {
+                foreach(var genreId in insert.GenreIds)
+                {
+                    entity.MovieGenres.Add(new MovieGenre {  GenreId = genreId });
+                }
+            }
         }
         public override IQueryable<Movie> AddInclude(IQueryable<Movie> query, MovieSearch? search = null)
         {
-            return query.Include(m => m.MovieActors);
+            return query.Include(m => m.MovieActors)
+                        .Include(m => m.MovieGenres);
         }
 
 
