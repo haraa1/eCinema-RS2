@@ -113,7 +113,7 @@ namespace eCinema.Models
                 entity.HasOne(s => s.CinemaHall)
                     .WithMany(ch => ch.Seats)
                     .HasForeignKey(s => s.CinemaHallId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
