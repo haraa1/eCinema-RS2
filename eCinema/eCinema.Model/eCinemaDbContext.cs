@@ -1,4 +1,5 @@
 ﻿using eCinema.Model.Entities;
+using eCinema.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace eCinema.Models
         public DbSet<Cinema> Cinemas { get; set; }
         public DbSet<CinemaHall> CinemaHalls { get; set; }
         public DbSet<Seat> Seats { get; set; }
+        public DbSet<SeatType> SeatsType { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -108,12 +110,32 @@ namespace eCinema.Models
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Row).IsRequired().HasMaxLength(10);
                 entity.Property(e => e.Number).IsRequired();
-                entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+                
 
                 entity.HasOne(s => s.CinemaHall)
                     .WithMany(ch => ch.Seats)
                     .HasForeignKey(s => s.CinemaHallId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(s => s.SeatType)
+                    .WithMany(st => st.Seats)
+                    .HasForeignKey(s => s.SeatTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+            });
+
+            modelBuilder.Entity<SeatType>(entity =>
+            {
+                entity.HasKey(st => st.Id);
+                entity.Property(st => st.Name).IsRequired().HasMaxLength(50);
+                entity.Property(st => st.PriceMultiplier).HasColumnType("decimal(18,2)").IsRequired();
+
+                
+                entity.HasData(
+                    new SeatType { Id = 1, Name = "Standard", PriceMultiplier = 1.0m },
+                    new SeatType { Id = 2, Name = "Love Seat", PriceMultiplier = 1.0m },
+                    new SeatType { Id = 3, Name = "VIP", PriceMultiplier = 1.5m }
+                );
             });
         }
     }
