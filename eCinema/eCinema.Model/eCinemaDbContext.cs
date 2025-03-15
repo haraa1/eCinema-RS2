@@ -24,7 +24,14 @@ namespace eCinema.Models
         public DbSet<Cinema> Cinemas { get; set; }
         public DbSet<CinemaHall> CinemaHalls { get; set; }
         public DbSet<Seat> Seats { get; set; }
-        public DbSet<SeatType> SeatsType { get; set; }
+        public DbSet<SeatType> SeatTypes { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<BookingConcession> BookingConcessions { get; set; }
+        public DbSet<Concession> Concessions { get; set; }
+        public DbSet<Showtime> Showtime { get; set; }
+        public DbSet<Ticket> Ticket { get; set; }
+        public DbSet<TicketType> TicketType { get; set; }
+        public DbSet<User> User { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,6 +47,12 @@ namespace eCinema.Models
                 entity.Property(e => e.ReleaseDate).IsRequired();
                 entity.Property(e => e.Status).IsRequired();
                 entity.Property(e => e.PgRating).IsRequired();
+
+                
+                entity.HasMany(e => e.Showtimes)
+                   .WithOne(s => s.Movie)
+                   .HasForeignKey(s => s.MovieId)
+                   .OnDelete(DeleteBehavior.Restrict);
             });
            
             modelBuilder.Entity<Genre>(entity =>
@@ -103,6 +116,11 @@ namespace eCinema.Models
                     .WithMany(c => c.CinemaHalls)
                     .HasForeignKey(ch => ch.CinemaId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(ch => ch.Showtimes)
+                   .WithOne(s => s.CinemaHall)
+                   .HasForeignKey(s => s.CinemaHallId)
+                   .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<Seat>(entity =>
@@ -137,6 +155,107 @@ namespace eCinema.Models
                     new SeatType { Id = 3, Name = "VIP", PriceMultiplier = 1.5m }
                 );
             });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.UserName).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.PasswordSalt).IsRequired();
+                entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+                entity.Property(e => e.CreatedAt).IsRequired();
+            });
+
+            modelBuilder.Entity<Showtime>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.StartTime).IsRequired();
+                entity.Property(e => e.EndTime).IsRequired();
+                entity.Property(e => e.BasePrice).IsRequired().HasColumnType("decimal(18,2)");
+
+                entity.HasOne(s => s.Movie)
+                    .WithMany(m => m.Showtimes)
+                    .HasForeignKey(s => s.MovieId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(s => s.CinemaHall)
+                    .WithMany(ch => ch.Showtimes)
+                    .HasForeignKey(s => s.CinemaHallId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Booking>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.BookingTime).IsRequired();
+                entity.Property(e => e.DiscountCode).HasMaxLength(10);
+
+                entity.HasOne(b => b.User)
+                    .WithMany(u => u.Bookings)
+                    .HasForeignKey(b => b.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(b => b.Showtime)
+                    .WithMany(s => s.Bookings)
+                    .HasForeignKey(b => b.ShowtimeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+              
+            });
+            modelBuilder.Entity<Ticket>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Price).IsRequired().HasColumnType("decimal(18,2)");
+
+                entity.HasOne(t => t.Booking)
+                    .WithMany(b => b.Tickets)
+                    .HasForeignKey(t => t.BookingId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(t => t.Seat)
+                    .WithMany()
+                    .HasForeignKey(t => t.SeatId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.TicketType)
+                    .WithMany(tt => tt.Tickets)
+                    .HasForeignKey(t => t.TicketTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<TicketType>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.PriceModifier).IsRequired().HasColumnType("decimal(18,2)");
+            });
+
+            modelBuilder.Entity<Concession>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Price).IsRequired().HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Description).HasMaxLength(500);
+            });
+
+            modelBuilder.Entity<BookingConcession>(entity =>
+            {
+                entity.HasKey(bc => new { bc.BookingId, bc.ConcessionId });
+                entity.Property(bc => bc.Quantity).IsRequired();
+
+                entity.HasOne(bc => bc.Booking)
+                    .WithMany(b => b.BookingConcessions)
+                    .HasForeignKey(bc => bc.BookingId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(bc => bc.Concession)
+                    .WithMany()
+                    .HasForeignKey(bc => bc.ConcessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
         }
     }
 }

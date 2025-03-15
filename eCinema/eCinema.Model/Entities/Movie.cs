@@ -1,4 +1,5 @@
-﻿using eCinema.Models.Enums;
+﻿using eCinema.Models.Entities;
+using eCinema.Models.Enums;
 
 namespace eCinema.Model.Entities
 {
@@ -15,6 +16,7 @@ namespace eCinema.Model.Entities
 
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
         public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
+        public ICollection<Showtime> Showtimes { get; set; } = new List<Showtime>();
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using eCinema.Models.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,5 +16,6 @@ namespace eCinema.Model.Entities
 
         public Cinema Cinema { get; set; }
         public ICollection<Seat> Seats { get; set; } = new List<Seat>();
+        public ICollection<Showtime> Showtimes { get; set; } = new List<Showtime>();
     }
 }
