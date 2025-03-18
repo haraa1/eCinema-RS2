@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Models.SearchObjects
 {
-    public class GenreSearch : BaseSearchObject
+    public class NameSearchObject : BaseSearchObject
     {
         public string? Name { get; set; }
     }

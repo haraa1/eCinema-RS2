@@ -8,10 +8,10 @@ namespace eCinema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class GenreController : BaseCRUDController<GenreDto, GenreSearch, GenreInsertDto, GenreUpdateDto>
+    public class GenreController : BaseCRUDController<GenreDto, NameSearchObject, GenreInsertDto, GenreUpdateDto>
     {
         public GenreController(
-            ILogger<BaseController<GenreDto, GenreSearch>> logger,
+            ILogger<BaseController<GenreDto, NameSearchObject>> logger,
             IGenreService service)
             : base(logger, service)
         {

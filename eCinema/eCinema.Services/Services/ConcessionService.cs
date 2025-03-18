@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using eCinema.Model.Entities;
-using eCinema.Models.DTOs.Actors;
+using eCinema.Models.DTOs.Cinemas;
 using eCinema.Models.SearchObjects;
 using eCinema.Models;
 using eCinema.Services.Interfaces;
@@ -9,17 +9,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using eCinema.Models.DTOs.Genres;
+using eCinema.Models.DTOs.Concessions;
+using eCinema.Models.Entities;
 
 namespace eCinema.Services.Services
 {
-    public class GenreService : BaseCRUDService<GenreDto, Genre, NameSearchObject, GenreInsertDto, GenreUpdateDto>, IGenreService
+    public class ConcessionService : BaseCRUDService<ConcessionDto, Concession, NameSearchObject, ConcessionInsertDto, ConcessionUpdateDto>, IConcessionService
     {
-        public GenreService(eCinemaDbContext context, IMapper mapper)
+        public ConcessionService(eCinemaDbContext context, IMapper mapper)
             : base(context, mapper)
         {
         }
-        public override IQueryable<Genre> AddFilter(IQueryable<Genre> query, NameSearchObject? search = null)
+        public override IQueryable<Concession> AddFilter(IQueryable<Concession> query, NameSearchObject? search = null)
         {
             var filteredQuery = base.AddFilter(query, search);
 
@@ -30,5 +31,7 @@ namespace eCinema.Services.Services
 
             return filteredQuery;
         }
+
+
     }
 }

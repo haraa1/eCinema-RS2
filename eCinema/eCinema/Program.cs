@@ -11,6 +11,7 @@ builder.Services.AddTransient<ICinemaService,CinemaService>();
 builder.Services.AddTransient<IActorService, ActorService>();
 builder.Services.AddTransient<IGenreService, GenreService>();
 builder.Services.AddTransient<ICinemaHallService, CinemaHallService>();
+builder.Services.AddTransient<IConcessionService, ConcessionService>();
 
 // Add services to the container.
 builder.Services.AddDbContext<eCinemaDbContext>(options =>
@@ -18,6 +19,7 @@ builder.Services.AddDbContext<eCinemaDbContext>(options =>
 
 builder.Services.AddAutoMapper(typeof(MovieProfile));
 builder.Services.AddAutoMapper(typeof(CinemaProfile));
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
