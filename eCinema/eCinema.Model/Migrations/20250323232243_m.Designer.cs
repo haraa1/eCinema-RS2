@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eCinema.Models;
 
@@ -11,9 +12,11 @@ using eCinema.Models;
 namespace eCinema.Models.Migrations
 {
     [DbContext(typeof(eCinemaDbContext))]
-    partial class eCinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323232243_m")]
+    partial class m
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -461,7 +464,7 @@ namespace eCinema.Models.Migrations
                     b.HasOne("eCinema.Model.Entities.Cinema", "Cinema")
                         .WithMany("CinemaHalls")
                         .HasForeignKey("CinemaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cinema");
@@ -497,7 +500,7 @@ namespace eCinema.Models.Migrations
                     b.HasOne("eCinema.Model.Entities.Movie", "Movie")
                         .WithMany("MovieGenres")
                         .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Genre");

@@ -68,7 +68,7 @@ namespace eCinema.Models
                 entity.HasOne(mg => mg.Movie)
                     .WithMany(m => m.MovieGenres)
                     .HasForeignKey(mg => mg.MovieId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(mg => mg.Genre)
                     .WithMany(g => g.MovieGenres)
@@ -90,12 +90,12 @@ namespace eCinema.Models
                 entity.HasOne(ma => ma.Movie)
                     .WithMany(m => m.MovieActors)
                     .HasForeignKey(ma => ma.MovieId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(ma => ma.Actor)
                     .WithMany(a => a.MovieActors)
                     .HasForeignKey(ma => ma.ActorId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Cinema>(entity =>
@@ -115,12 +115,12 @@ namespace eCinema.Models
                 entity.HasOne(ch => ch.Cinema)
                     .WithMany(c => c.CinemaHalls)
                     .HasForeignKey(ch => ch.CinemaId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasMany(ch => ch.Showtimes)
                    .WithOne(s => s.CinemaHall)
                    .HasForeignKey(s => s.CinemaHallId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Seat>(entity =>
