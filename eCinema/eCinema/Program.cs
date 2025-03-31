@@ -37,7 +37,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFlutterApps"); // Enable CORS with the defined policy
 
 app.UseAuthorization();
 

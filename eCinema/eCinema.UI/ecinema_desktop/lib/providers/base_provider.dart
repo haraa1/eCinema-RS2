@@ -38,7 +38,10 @@ abstract class BaseProvider<T> with ChangeNotifier {
       result.count = data['count'];
 
       for (var item in data['result']) {
-        result.result.add(fromJson(item));
+        print("Item before parsing: $item");
+        var parsed = fromJson(item);
+        print("Parsed: ${parsed.runtimeType}"); // should print "Movie"
+        result.result.add(parsed);
       }
 
       return result;
