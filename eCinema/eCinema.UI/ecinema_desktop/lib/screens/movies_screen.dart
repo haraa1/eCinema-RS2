@@ -19,6 +19,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
   List<Movie> _movies = [];
   bool _isLoading = true;
+  int _currentPage = 1;
+  int _pageSize = 10;
+  int _totalCount = 0;
 
   @override
   void initState() {
@@ -28,15 +31,25 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
   Future<void> _loadMovies() async {
     try {
-      final result = await _movieProvider.get();
+      setState(() => _isLoading = true);
+      final result = await _movieProvider.get(
+        filter: {
+          "Title": _searchController.text,
+          "Page": _currentPage - 1,
+          "PageSize": _pageSize,
+        },
+      );
       setState(() {
         _movies = result.result;
+        _totalCount = result.count ?? 0;
         _isLoading = false;
       });
     } catch (e) {
       print("Error loading movies: $e");
     }
   }
+
+  int get _totalPages => (_totalCount / _pageSize).ceil();
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +70,20 @@ class _MovieListScreenState extends State<MovieListScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
+                    onSubmitted: (_) {
+                      _currentPage = 1;
+                      _loadMovies();
+                    },
                   ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _currentPage = 1;
+                    _loadMovies();
+                  },
+                  icon: const Icon(Icons.search),
+                  label: const Text("Pretraži"),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
@@ -81,25 +107,57 @@ class _MovieListScreenState extends State<MovieListScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
-            _isLoading
-                ? const CircularProgressIndicator()
-                : Expanded(
-                  child: SingleChildScrollView(
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text("FILM")),
-                        DataColumn(label: Text("STATUS")),
-                        DataColumn(label: Text("DATUM IZLASKA")),
-                        DataColumn(label: Text("TRAJANJE")),
-                        DataColumn(label: Text("JEZIK")),
-                        DataColumn(label: Text("PG OCJENA")),
-                        DataColumn(label: Text("AKCIJE")),
-                      ],
-                      rows: _buildMovieRows(),
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text("FILM")),
+                            DataColumn(label: Text("STATUS")),
+                            DataColumn(label: Text("DATUM IZLASKA")),
+                            DataColumn(label: Text("TRAJANJE")),
+                            DataColumn(label: Text("JEZIK")),
+                            DataColumn(label: Text("PG OCJENA")),
+                            DataColumn(label: Text("AKCIJE")),
+                          ],
+                          rows: _buildMovieRows(),
+                        ),
+                      ),
                     ),
-                  ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed:
+                              _currentPage > 1
+                                  ? () {
+                                    setState(() => _currentPage--);
+                                    _loadMovies();
+                                  }
+                                  : null,
+                        ),
+                        Text("$_currentPage / $_totalPages"),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_forward),
+                          onPressed:
+                              _currentPage < _totalPages
+                                  ? () {
+                                    setState(() => _currentPage++);
+                                    _loadMovies();
+                                  }
+                                  : null,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
           ],
         ),
       ),
