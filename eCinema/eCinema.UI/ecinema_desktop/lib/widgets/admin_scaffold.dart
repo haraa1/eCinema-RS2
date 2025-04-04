@@ -28,6 +28,10 @@ class AdminScaffold extends StatelessWidget {
                 icon: Icon(Icons.movie),
                 label: Text('Filmovi'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.person),
+                label: Text('Glumci'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),

@@ -1,23 +1,20 @@
-import 'package:ecinema_desktop/models/movie.dart';
-import 'package:ecinema_desktop/providers/base_provider.dart';
-import 'package:ecinema_desktop/providers/movie_provider.dart';
-import 'package:ecinema_desktop/screens/movies_form_screen.dart';
+import 'package:ecinema_desktop/models/actor.dart';
+import 'package:ecinema_desktop/providers/actor_provider.dart';
+import 'package:ecinema_desktop/screens/actors_form_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 
-class MovieListScreen extends StatefulWidget {
-  const MovieListScreen({Key? key}) : super(key: key);
+class ActorListScreen extends StatefulWidget {
+  const ActorListScreen({super.key});
 
   @override
-  State<MovieListScreen> createState() => _MovieListScreenState();
+  State<ActorListScreen> createState() => _ActorListScreenState();
 }
 
-class _MovieListScreenState extends State<MovieListScreen> {
+class _ActorListScreenState extends State<ActorListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  // final MovieProvider _movieProvider = MovieProvider();
-  final BaseProvider<Movie> _movieProvider = MovieProvider();
+  final ActorProvider _actorProvider = ActorProvider();
 
-  List<Movie> _movies = [];
+  List<Actor> _actors = [];
   bool _isLoading = true;
   int _currentPage = 1;
   int _pageSize = 10;
@@ -26,26 +23,26 @@ class _MovieListScreenState extends State<MovieListScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMovies();
+    _loadActors();
   }
 
-  Future<void> _loadMovies() async {
+  Future<void> _loadActors() async {
     try {
       setState(() => _isLoading = true);
-      final result = await _movieProvider.get(
+      final result = await _actorProvider.get(
         filter: {
-          "Title": _searchController.text,
+          "Name": _searchController.text,
           "Page": _currentPage - 1,
           "PageSize": _pageSize,
         },
       );
       setState(() {
-        _movies = result.result;
+        _actors = result.result;
         _totalCount = result.count ?? 0;
         _isLoading = false;
       });
     } catch (e) {
-      print("Error loading movies: $e");
+      print("Error loading actors: $e");
     }
   }
 
@@ -64,7 +61,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: "Traži film...",
+                      hintText: "Traži glumca...",
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -72,7 +69,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                     ),
                     onSubmitted: (_) {
                       _currentPage = 1;
-                      _loadMovies();
+                      _loadActors();
                     },
                   ),
                 ),
@@ -80,29 +77,23 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
                     _currentPage = 1;
-                    _loadMovies();
+                    _loadActors();
                   },
                   icon: const Icon(Icons.search),
                   label: const Text("Pretraži"),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.filter_list),
-                  label: const Text("Filteri"),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
                   onPressed: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const MovieFormScreen(),
+                        builder: (context) => const ActorFormScreen(),
                       ),
                     );
-                    _loadMovies();
+                    _loadActors();
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text("Dodaj novi film"),
+                  label: const Text("Dodaj novog glumca"),
                 ),
               ],
             ),
@@ -117,15 +108,11 @@ class _MovieListScreenState extends State<MovieListScreen> {
                       child: SingleChildScrollView(
                         child: DataTable(
                           columns: const [
-                            DataColumn(label: Text("FILM")),
-                            DataColumn(label: Text("STATUS")),
-                            DataColumn(label: Text("DATUM IZLASKA")),
-                            DataColumn(label: Text("TRAJANJE")),
-                            DataColumn(label: Text("JEZIK")),
-                            DataColumn(label: Text("PG OCJENA")),
+                            DataColumn(label: Text("IME")),
+                            DataColumn(label: Text("PREZIME")),
                             DataColumn(label: Text("AKCIJE")),
                           ],
-                          rows: _buildMovieRows(),
+                          rows: _buildActorRows(),
                         ),
                       ),
                     ),
@@ -138,7 +125,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                               _currentPage > 1
                                   ? () {
                                     setState(() => _currentPage--);
-                                    _loadMovies();
+                                    _loadActors();
                                   }
                                   : null,
                         ),
@@ -149,7 +136,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                               _currentPage < _totalPages
                                   ? () {
                                     setState(() => _currentPage++);
-                                    _loadMovies();
+                                    _loadActors();
                                   }
                                   : null,
                         ),
@@ -164,42 +151,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
     );
   }
 
-  List<DataRow> _buildMovieRows() {
-    return _movies.map((movie) {
+  List<DataRow> _buildActorRows() {
+    return _actors.map((actor) {
       return DataRow(
         cells: [
-          DataCell(
-            Row(
-              children: [
-                const Icon(Icons.movie),
-                const SizedBox(width: 8),
-                Text(movie.title ?? ""),
-              ],
-            ),
-          ),
-          DataCell(_buildStatusBadge(movie.status ?? 0)),
-          DataCell(
-            Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  movie.releaseDate?.toIso8601String().split('T').first ?? "",
-                ),
-              ],
-            ),
-          ),
-          DataCell(
-            Row(
-              children: [
-                const Icon(Icons.access_time, size: 16),
-                const SizedBox(width: 4),
-                Text("${movie.durationMinutes ?? 0} min"),
-              ],
-            ),
-          ),
-          DataCell(Text(movie.language ?? "")),
-          DataCell(Text(_getPGRatingText(movie.pgRating))),
+          DataCell(Text(actor.firstName ?? "")),
+          DataCell(Text(actor.lastName ?? "")),
           DataCell(
             Row(
               children: [
@@ -208,10 +165,10 @@ class _MovieListScreenState extends State<MovieListScreen> {
                   onPressed: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => MovieFormScreen(movie: movie),
+                        builder: (context) => ActorFormScreen(actor: actor),
                       ),
                     );
-                    _loadMovies();
+                    _loadActors();
                   },
                 ),
                 IconButton(
@@ -223,7 +180,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                           (ctx) => AlertDialog(
                             title: const Text("Potvrda brisanja"),
                             content: const Text(
-                              "Da li ste sigurni da želite obrisati ovaj film?",
+                              "Da li ste sigurni da želite obrisati ovog glumca?",
                             ),
                             actions: [
                               TextButton(
@@ -243,15 +200,15 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
                     if (confirm == true) {
                       try {
-                        await _movieProvider.delete(movie.id!);
-                        _loadMovies();
+                        await _actorProvider.delete(actor.id!);
+                        _loadActors();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Film obrisan.")),
+                          const SnackBar(content: Text("Glumac obrisan.")),
                         );
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("Greška pri brisanju filma: $e"),
+                            content: Text("Greška pri brisanju: $e"),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -265,47 +222,5 @@ class _MovieListScreenState extends State<MovieListScreen> {
         ],
       );
     }).toList();
-  }
-
-  Widget _buildStatusBadge(int status) {
-    String label;
-    Color color;
-
-    switch (status) {
-      case 0:
-        label = "Aktivan";
-        color = Colors.green;
-        break;
-      case 1:
-        label = "Uskoro";
-        color = Colors.orange;
-        break;
-      default:
-        label = "Nepoznat";
-        color = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  String _getPGRatingText(int? rating) {
-    switch (rating) {
-      case 0:
-        return "PG-13";
-      case 1:
-        return "R";
-      default:
-        return "N/A";
-    }
   }
 }
