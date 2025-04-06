@@ -1,4 +1,5 @@
 import 'package:ecinema_desktop/screens/actors_screen.dart';
+import 'package:ecinema_desktop/screens/cinemas_screen.dart';
 import 'package:ecinema_desktop/screens/movies_screen.dart';
 import 'package:ecinema_desktop/widgets/admin_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       case 1:
         currentTitle = "Glumci";
         currentScreen = const ActorListScreen();
+        break;
+      case 2:
+        currentTitle = "Kina";
+        currentScreen = const CinemaListScreen();
         break;
       default:
         currentTitle = "Početna";

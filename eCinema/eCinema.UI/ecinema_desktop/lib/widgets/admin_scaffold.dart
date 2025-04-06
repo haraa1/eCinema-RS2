@@ -32,6 +32,10 @@ class AdminScaffold extends StatelessWidget {
                 icon: Icon(Icons.person),
                 label: Text('Glumci'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.theater_comedy),
+                label: Text('Kina'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),
