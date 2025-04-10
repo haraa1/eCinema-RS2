@@ -11,8 +11,8 @@ namespace eCinema.Models.DTOs.CinemaHalls
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int CinemaId { get; set; }
         public int Capacity { get; set; }
-        public List<SeatDto> Seats { get; set; }
+        public int CinemaId { get; set; }
+        public List<eCinema.Models.DTOs.Seats.SeatDto> Seats { get; set; } = new List<eCinema.Models.DTOs.Seats.SeatDto>();
     }
 }

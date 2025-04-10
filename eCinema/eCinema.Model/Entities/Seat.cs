@@ -12,6 +12,7 @@ namespace eCinema.Model.Entities
         public int Id { get; set; }
         public string Row { get; set; }
         public int Number { get; set; }
+        public bool isAvailable {  get; set; }
         public int SeatTypeId { get; set; }
         public SeatType SeatType { get; set; }
         public int CinemaHallId { get; set; }

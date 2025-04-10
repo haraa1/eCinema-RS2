@@ -9,9 +9,6 @@ namespace eCinema.Models.DTOs.CinemaHalls
     public class CinemaHallUpdateDto
     {
         public string Name { get; set; }
-        public int CinemaId { get; set; } 
-        public int Rows { get; set; }
-        public int SeatsPerRow { get; set; }
-        public int SeatTypeId { get; set; }
+        public int Capacity { get; set; }
     }
 }

@@ -14,16 +14,12 @@ namespace eCinema.Models.Mappings
     {
         public CinemaHallProfile()
         {
-            CreateMap<CinemaHall, CinemaHallDto>().ForMember(dest => dest.Seats, opt => opt.MapFrom(src => src.Seats));
+            CreateMap<CinemaHall, CinemaHallDto>()
+                .ForMember(dest => dest.Seats, opt => opt.MapFrom(src => src.Seats));
 
-            CreateMap<Seat, SeatDto>();
-
-            CreateMap<CinemaHallInsertDto, CinemaHall>().ForMember(dest => dest.Capacity, opt => opt.Ignore())
-                                                        .ForMember(dest => dest.Seats, opt => opt.Ignore());
-
-            CreateMap<CinemaHallUpdateDto, CinemaHall>().ForMember(dest => dest.Capacity, opt => opt.Ignore())
-                                                        .ForMember(dest => dest.Seats, opt => opt.Ignore());
+            CreateMap<CinemaHallInsertDto, CinemaHall>();
+            CreateMap<CinemaHallUpdateDto, CinemaHall>();
         }
-    }
 
+    }
 }

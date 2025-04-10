@@ -6,12 +6,9 @@ using System.Threading.Tasks;
 
 namespace eCinema.Models.DTOs.Seats
 {
-    public class SeatDto
+    public class RemoveSeatsDto
     {
-        public int Id { get; set; }
-        public string Row { get; set; }
-        public int Number { get; set; }
-        public bool isAvailable { get; set; }
         public int SeatTypeId { get; set; }
+        public int NumberOfSeats { get; set; }
     }
 }
