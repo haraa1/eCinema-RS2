@@ -31,7 +31,7 @@ class _CinemaListScreenState extends State<CinemaListScreen> {
       setState(() => _isLoading = true);
       final result = await _cinemaProvider.get(
         filter: {
-          "Name": _searchController.text,
+          "City": _searchController.text,
           "Page": _currentPage - 1,
           "PageSize": _pageSize,
         },
