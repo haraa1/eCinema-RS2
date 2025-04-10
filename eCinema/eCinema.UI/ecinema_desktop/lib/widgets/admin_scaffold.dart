@@ -40,6 +40,10 @@ class AdminScaffold extends StatelessWidget {
                 icon: Icon(Icons.theaters),
                 label: Text('Kino sale'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.fastfood),
+                label: Text('Hrana/Piće'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),
