@@ -44,6 +44,10 @@ class AdminScaffold extends StatelessWidget {
                 icon: Icon(Icons.fastfood),
                 label: Text('Hrana/Piće'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.event),
+                label: Text('Projekcije'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),
