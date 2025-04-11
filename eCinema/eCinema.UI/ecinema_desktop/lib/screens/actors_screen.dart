@@ -105,15 +105,25 @@ class _ActorListScreenState extends State<ActorListScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("IME")),
-                            DataColumn(label: Text("PREZIME")),
-                            DataColumn(label: Text("AKCIJE")),
-                          ],
-                          rows: _buildActorRows(),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text("IME")),
+                                  DataColumn(label: Text("PREZIME")),
+                                  DataColumn(label: Text("AKCIJE")),
+                                ],
+                                rows: _buildActorRows(),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Row(
@@ -197,7 +207,6 @@ class _ActorListScreenState extends State<ActorListScreen> {
                             ],
                           ),
                     );
-
                     if (confirm == true) {
                       try {
                         await _actorProvider.delete(actor.id!);

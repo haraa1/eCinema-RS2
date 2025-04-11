@@ -3,7 +3,6 @@ import 'package:ecinema_desktop/providers/base_provider.dart';
 import 'package:ecinema_desktop/providers/movie_provider.dart';
 import 'package:ecinema_desktop/screens/movies_form_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 
 class MovieListScreen extends StatefulWidget {
   const MovieListScreen({Key? key}) : super(key: key);
@@ -14,7 +13,6 @@ class MovieListScreen extends StatefulWidget {
 
 class _MovieListScreenState extends State<MovieListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  // final MovieProvider _movieProvider = MovieProvider();
   final BaseProvider<Movie> _movieProvider = MovieProvider();
 
   List<Movie> _movies = [];
@@ -114,19 +112,29 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("FILM")),
-                            DataColumn(label: Text("STATUS")),
-                            DataColumn(label: Text("DATUM IZLASKA")),
-                            DataColumn(label: Text("TRAJANJE")),
-                            DataColumn(label: Text("JEZIK")),
-                            DataColumn(label: Text("PG OCJENA")),
-                            DataColumn(label: Text("AKCIJE")),
-                          ],
-                          rows: _buildMovieRows(),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text("FILM")),
+                                  DataColumn(label: Text("STATUS")),
+                                  DataColumn(label: Text("DATUM IZLASKA")),
+                                  DataColumn(label: Text("TRAJANJE")),
+                                  DataColumn(label: Text("JEZIK")),
+                                  DataColumn(label: Text("PG OCJENA")),
+                                  DataColumn(label: Text("AKCIJE")),
+                                ],
+                                rows: _buildMovieRows(),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Row(
@@ -240,7 +248,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
                             ],
                           ),
                     );
-
                     if (confirm == true) {
                       try {
                         await _movieProvider.delete(movie.id!);

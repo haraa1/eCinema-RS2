@@ -63,82 +63,91 @@ class _ShowtimeListScreenState extends State<ShowtimeListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ShowtimeFormScreen(),
-                      ),
-                    );
-                    _loadShowtimes();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text("Dodaj projekciju"),
-                ),
-              ],
+            const Spacer(),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ShowtimeFormScreen(),
+                  ),
+                );
+                _loadShowtimes();
+              },
+              icon: const Icon(Icons.add),
+              label: const Text("Dodaj projekciju"),
             ),
-            const SizedBox(height: 16),
-            if (_isLoading)
-              const CircularProgressIndicator()
-            else
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("FILM")),
-                            DataColumn(label: Text("SALA")),
-                            DataColumn(label: Text("POČETAK")),
-                            DataColumn(label: Text("KRAJ")),
-                            DataColumn(label: Text("CIJENA")),
-                            DataColumn(label: Text("AKCIJE")),
-                          ],
-                          rows: _buildRows(),
-                        ),
-                      ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_isLoading)
+          const CircularProgressIndicator()
+        else
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minWidth: constraints.maxWidth,
+                            ),
+                            child: DataTable(
+                              columns: const [
+                                DataColumn(label: Text("FILM")),
+                                DataColumn(label: Text("SALA")),
+                                DataColumn(label: Text("POČETAK")),
+                                DataColumn(label: Text("KRAJ")),
+                                DataColumn(label: Text("CIJENA")),
+                                DataColumn(label: Text("AKCIJE")),
+                              ],
+                              rows: _buildRows(),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed:
-                              _currentPage > 1
-                                  ? () {
-                                    setState(() => _currentPage--);
-                                    _loadShowtimes();
-                                  }
-                                  : null,
-                        ),
-                        Text("$_currentPage / $_totalPages"),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward),
-                          onPressed:
-                              _currentPage < _totalPages
-                                  ? () {
-                                    setState(() => _currentPage++);
-                                    _loadShowtimes();
-                                  }
-                                  : null,
-                        ),
-                      ],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed:
+                          _currentPage > 1
+                              ? () {
+                                setState(() => _currentPage--);
+                                _loadShowtimes();
+                              }
+                              : null,
+                    ),
+                    Text("$_currentPage / $_totalPages"),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_forward),
+                      onPressed:
+                          _currentPage < _totalPages
+                              ? () {
+                                setState(() => _currentPage++);
+                                _loadShowtimes();
+                              }
+                              : null,
                     ),
                   ],
                 ),
-              ),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -202,7 +211,6 @@ class _ShowtimeListScreenState extends State<ShowtimeListScreen> {
                             ],
                           ),
                     );
-
                     if (confirm == true) {
                       try {
                         await _showtimeProvider.delete(s.id!);

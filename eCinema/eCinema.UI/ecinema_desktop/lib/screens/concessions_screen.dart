@@ -105,16 +105,26 @@ class _ConcessionListScreenState extends State<ConcessionListScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("NAZIV")),
-                            DataColumn(label: Text("CIJENA")),
-                            DataColumn(label: Text("OPIS")),
-                            DataColumn(label: Text("AKCIJE")),
-                          ],
-                          rows: _buildRows(),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text("NAZIV")),
+                                  DataColumn(label: Text("CIJENA")),
+                                  DataColumn(label: Text("OPIS")),
+                                  DataColumn(label: Text("AKCIJE")),
+                                ],
+                                rows: _buildRows(),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Row(
@@ -200,7 +210,6 @@ class _ConcessionListScreenState extends State<ConcessionListScreen> {
                             ],
                           ),
                     );
-
                     if (confirm == true) {
                       try {
                         await _concessionProvider.delete(c.id!);

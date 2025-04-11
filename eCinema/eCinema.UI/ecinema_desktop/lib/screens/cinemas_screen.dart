@@ -105,16 +105,26 @@ class _CinemaListScreenState extends State<CinemaListScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("NAZIV")),
-                            DataColumn(label: Text("GRAD")),
-                            DataColumn(label: Text("ADRESA")),
-                            DataColumn(label: Text("AKCIJE")),
-                          ],
-                          rows: _buildCinemaRows(),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text("NAZIV")),
+                                  DataColumn(label: Text("GRAD")),
+                                  DataColumn(label: Text("ADRESA")),
+                                  DataColumn(label: Text("AKCIJE")),
+                                ],
+                                rows: _buildCinemaRows(),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Row(
@@ -199,7 +209,6 @@ class _CinemaListScreenState extends State<CinemaListScreen> {
                             ],
                           ),
                     );
-
                     if (confirm == true) {
                       try {
                         await _cinemaProvider.delete(cinema.id!);

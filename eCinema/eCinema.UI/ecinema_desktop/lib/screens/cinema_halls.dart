@@ -56,6 +56,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Search field and controls
             Row(
               children: [
                 Expanded(
@@ -106,15 +107,25 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text("NAZIV")),
-                            DataColumn(label: Text("KAPACITET")),
-                            DataColumn(label: Text("AKCIJE")),
-                          ],
-                          rows: _cinemaHalls.map(_buildRow).toList(),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text("NAZIV")),
+                                  DataColumn(label: Text("KAPACITET")),
+                                  DataColumn(label: Text("AKCIJE")),
+                                ],
+                                rows: _cinemaHalls.map(_buildRow).toList(),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Row(
