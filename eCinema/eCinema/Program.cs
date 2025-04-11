@@ -14,6 +14,7 @@ builder.Services.AddTransient<ICinemaHallService, CinemaHallService>();
 builder.Services.AddTransient<IConcessionService, ConcessionService>();
 builder.Services.AddTransient<ISeatService, SeatService>();
 builder.Services.AddTransient<ISeatTypeService, SeatTypeService>();
+builder.Services.AddTransient<IShowtimeService, ShowtimeService>();
 
 // Add services to the container.
 builder.Services.AddDbContext<eCinemaDbContext>(options =>
