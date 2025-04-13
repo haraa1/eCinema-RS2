@@ -32,6 +32,8 @@ namespace eCinema.Models
         public DbSet<Ticket> Ticket { get; set; }
         public DbSet<TicketType> TicketType { get; set; }
         public DbSet<User> User { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -254,6 +256,30 @@ namespace eCinema.Models
                     .HasForeignKey(bc => bc.ConcessionId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name)
+                      .IsRequired()
+                      .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(ur => ur.User)
+                      .WithMany(u => u.UserRoles)
+                      .HasForeignKey(ur => ur.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(ur => ur.Role)
+                      .WithMany(r => r.UserRoles)
+                      .HasForeignKey(ur => ur.RoleId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
 
         }
