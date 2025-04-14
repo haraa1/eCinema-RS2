@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../utils/util.dart';
+import '../screens/login_screen.dart';
 
 class AdminScaffold extends StatelessWidget {
   final String title;
@@ -54,7 +56,48 @@ class AdminScaffold extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                AppBar(title: Text(title), automaticallyImplyLeading: false),
+                AppBar(
+                  title: Text(title),
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    IconButton(
+                      icon: Icon(Icons.logout),
+                      tooltip: "Odjava",
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder:
+                              (_) => AlertDialog(
+                                title: Text("Potvrdi odjavu"),
+                                content: Text(
+                                  "Da li ste sigurni da se želite odjaviti?",
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text("Prekini"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      Authorization.username = null;
+                                      Authorization.password = null;
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (_) => const LoginScreen(),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    },
+                                    child: Text("Odjava"),
+                                  ),
+                                ],
+                              ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
                 Expanded(child: body),
               ],
             ),

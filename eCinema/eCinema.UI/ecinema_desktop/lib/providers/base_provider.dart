@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ecinema_desktop/models/search_result.dart';
+import 'package:ecinema_desktop/utils/util.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
@@ -110,10 +111,20 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   Map<String, String> createHeaders() {
-    return {
+    String username = Authorization.username ?? "";
+    String password = Authorization.password ?? "";
+
+    print("passed creds: $username, $password");
+
+    String basicAuth =
+        "Basic ${base64Encode(utf8.encode('$username:$password'))}";
+
+    var headers = {
       "Content-Type": "application/json",
-      // "Authorization": basicAuth, // TEMP: Skip until auth is implemented
+      "Authorization": basicAuth,
     };
+
+    return headers;
   }
 
   String getQueryString(

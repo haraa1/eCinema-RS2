@@ -1,4 +1,5 @@
 import 'package:ecinema_desktop/screens/admin_home_screen.dart';
+import 'package:ecinema_desktop/screens/login_screen.dart';
 import 'package:ecinema_desktop/screens/movies_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Admin Panel',
         theme: ThemeData(primarySwatch: Colors.blue),
-        home: AdminHomeScreen(),
+        home: LoginScreen(),
       ),
     );
   }
