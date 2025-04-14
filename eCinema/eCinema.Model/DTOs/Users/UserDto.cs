@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace eCinema.Models.DTOs.Users
+{
+    public class UserDto
+    {
+        public int Id { get; set; }
+        public string UserName { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string? PhoneNumber { get; set; }
+        public List<string> Roles { get; set; } = new List<string>();
+    }
+}
