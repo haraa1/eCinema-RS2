@@ -12,13 +12,20 @@ namespace eCinema.Models.Mappings
 {
     public class UserProfile : Profile
     {
-        public UserProfile() {
-            CreateMap<User, UserDto>().ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.UserRoles.Select(ur => ur.Role.Name).ToList()));
+        public UserProfile()
+        {
+            CreateMap<UserInsertDto, User>()
+                .ForMember(dest => dest.UserRoles, opt => opt.Ignore());
 
-            CreateMap<Role, RoleDto>();
-            CreateMap<UserInsertDto, User>();
+
+            CreateMap<User, UserDto>()
+               .ForMember(
+                   dest => dest.Roles,
+                   opt => opt.MapFrom(src => src.UserRoles.Select(ur => ur.Role.Name).ToList())
+               );
+
             CreateMap<UserUpdateDto, User>()
-                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+             .ForMember(dest => dest.UserRoles, opt => opt.Ignore());
 
         }
     }

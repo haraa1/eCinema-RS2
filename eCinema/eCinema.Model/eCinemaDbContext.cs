@@ -263,6 +263,11 @@ namespace eCinema.Models
                 entity.Property(e => e.Name)
                       .IsRequired()
                       .HasMaxLength(50);
+
+            entity.HasData(
+                    new Role { Id = 1, Name = "Admin"},
+                    new Role { Id = 2, Name = "User"}
+                );
             });
 
             modelBuilder.Entity<UserRole>(entity =>
@@ -272,12 +277,12 @@ namespace eCinema.Models
                 entity.HasOne(ur => ur.User)
                       .WithMany(u => u.UserRoles)
                       .HasForeignKey(ur => ur.UserId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(ur => ur.Role)
                       .WithMany(r => r.UserRoles)
                       .HasForeignKey(ur => ur.RoleId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
 

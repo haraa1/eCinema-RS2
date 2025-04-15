@@ -17,7 +17,7 @@ namespace eCinema.Controllers
             : base(logger, service)
         {
         }
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "Admin")]
         public override Task<UserDto> Insert([FromBody] UserInsertDto insert)
         {
             return base.Insert(insert);

@@ -4,6 +4,7 @@ import 'package:ecinema_desktop/screens/cinemas_screen.dart';
 import 'package:ecinema_desktop/screens/concessions_screen.dart';
 import 'package:ecinema_desktop/screens/movies_screen.dart';
 import 'package:ecinema_desktop/screens/showtimes_screen.dart';
+import 'package:ecinema_desktop/screens/user_list_screen.dart';
 import 'package:ecinema_desktop/widgets/admin_scaffold.dart';
 import 'package:flutter/material.dart';
 
@@ -47,6 +48,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         currentTitle = "Projekcije";
         currentScreen = const ShowtimeListScreen();
         break;
+      case 6:
+        currentTitle = "Korisnici";
+        currentScreen = const UserListScreen();
       default:
         currentTitle = "Početna";
         currentScreen = const Center(child: Text("Nepoznata sekcija"));

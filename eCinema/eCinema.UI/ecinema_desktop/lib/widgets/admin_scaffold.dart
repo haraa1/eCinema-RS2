@@ -50,6 +50,10 @@ class AdminScaffold extends StatelessWidget {
                 icon: Icon(Icons.event),
                 label: Text('Projekcije'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.people),
+                label: Text('Korisnici'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),

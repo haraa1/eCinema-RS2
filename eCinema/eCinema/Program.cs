@@ -28,6 +28,7 @@ builder.Services.AddDbContext<eCinemaDbContext>(options =>
 
 builder.Services.AddAutoMapper(typeof(MovieProfile));
 builder.Services.AddAutoMapper(typeof(CinemaProfile));
+builder.Services.AddAutoMapper(typeof(UserProfile));
 
 
 builder.Services.AddControllers();
