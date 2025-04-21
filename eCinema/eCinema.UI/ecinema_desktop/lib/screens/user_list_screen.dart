@@ -42,7 +42,7 @@ class _UserListScreenState extends State<UserListScreen> {
       setState(() => _isLoading = true);
       final result = await _userProvider.get(
         filter: {
-          "UserName": _searchController.text,
+          "Name": _searchController.text,
           "Page": _currentPage - 1,
           "PageSize": _pageSize,
         },

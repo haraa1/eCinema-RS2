@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using eCinema.Model.Entities;
 using eCinema.Models;
 using eCinema.Models.DTOs.Users;
 using eCinema.Models.Entities;
@@ -17,6 +18,18 @@ namespace eCinema.Services.Services
     {
         public UserService(eCinemaDbContext context, IMapper mapper) : base(context, mapper)
         {
+        }
+
+        public override IQueryable<User> AddFilter(IQueryable<User> query, ActorSearch? search = null)
+        {
+            var filteredQuery = base.AddFilter(query, search);
+
+            if (!string.IsNullOrWhiteSpace(search?.Name))
+            {
+                filteredQuery = filteredQuery.Where(x => x.UserName.Contains(search.Name));
+            }
+
+            return filteredQuery;
         }
 
         public override async Task BeforeInsert(User entity, UserInsertDto insert)
