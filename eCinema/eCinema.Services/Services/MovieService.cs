@@ -28,6 +28,11 @@ namespace eCinema.Services.Services
                 filteredQuery = filteredQuery.Where(x => x.Title.Contains(search.Title));
             }
 
+            if (search.Status.HasValue)
+            {
+                filteredQuery = filteredQuery.Where(x => x.Status == search.Status.Value);
+            }
+
             return filteredQuery;
         }
 
