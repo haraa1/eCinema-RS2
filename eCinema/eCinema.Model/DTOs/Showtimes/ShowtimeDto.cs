@@ -1,5 +1,6 @@
 ﻿using eCinema.Models.DTOs.Bookings;
 using eCinema.Models.DTOs.CinemaHalls;
+using eCinema.Models.DTOs.Cinemas;
 using eCinema.Models.DTOs.Movies;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace eCinema.Models.DTOs.Showtimes
 
         public MovieDto Movie { get; set; }
         public CinemaHallDto CinemaHall { get; set; }
+        public CinemaDto Cinema { get; set; }
         public IEnumerable<BookingDto> Bookings { get; set; }
     }
 }

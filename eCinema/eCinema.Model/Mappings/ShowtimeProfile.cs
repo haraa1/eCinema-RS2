@@ -14,9 +14,13 @@ namespace eCinema.Models.Mappings
     {
         public ShowtimeProfile()
         {
-            CreateMap<Showtime, ShowtimeDto>();
+            CreateMap<Showtime, ShowtimeDto>()
+            .ForMember(dest => dest.Cinema,
+                       opt => opt.MapFrom(src => src.CinemaHall.Cinema));
             CreateMap<ShowtimeInsertDto, Showtime>();
             CreateMap<ShowtimeUpdateDto, Showtime>();
+
+
         }
     }
 }
