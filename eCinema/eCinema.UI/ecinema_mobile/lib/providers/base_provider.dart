@@ -56,12 +56,10 @@ abstract class BaseProvider<T> with ChangeNotifier {
 
     Map<String, String> headers = createHeaders();
     print("get me");
-    print("hahhhhhaha)");
     var response = await http!.get(uri, headers: headers);
     print("done $response");
     if (isValidResponseCode(response)) {
       var data = jsonDecode(response.body);
-      print("data: $data");
       return data['result'].map((x) => fromJson(x)).cast<T>().toList();
     } else {
       throw Exception("Exception... handle this gracefully");
