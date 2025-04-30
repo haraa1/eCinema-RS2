@@ -4,6 +4,7 @@ using eCinema.Models;
 using eCinema.Models.DTOs.Movies;
 using eCinema.Models.SearchObjects;
 using eCinema.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -60,6 +61,29 @@ namespace eCinema.Services.Services
                         .Include(m => m.MovieGenres);
         }
 
+        public async Task SetPosterAsync(int id, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("Poster file is empty", nameof(file));
 
+            var movie = await _context.Movies.FindAsync(id)
+                        ?? throw new KeyNotFoundException("Movie not found");
+
+            await using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            movie.PosterImage = ms.ToArray();
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<(byte[] Data, string ContentType)?> GetPosterAsync(int id)
+        {
+            var data = await _context.Movies
+                       .Where(m => m.Id == id)
+                       .Select(m => m.PosterImage)
+                       .SingleOrDefaultAsync();
+
+            return data == null ? null : (data, "image/jpeg");
+        }
     }
 }

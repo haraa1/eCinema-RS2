@@ -19,10 +19,10 @@ namespace eCinema.Models.Mappings
 
 
             CreateMap<User, UserDto>()
-               .ForMember(
-                   dest => dest.Roles,
-                   opt => opt.MapFrom(src => src.UserRoles.Select(ur => ur.Role.Name).ToList())
-               );
+                .ForMember(dest => dest.Roles,
+                           opt => opt.MapFrom(s => s.UserRoles.Select(ur => ur.Role.Name)))
+                .ForMember(dest => dest.HasPicture,
+                           opt => opt.MapFrom(s => s.ProfilePicture != null));
 
             CreateMap<UserUpdateDto, User>()
              .ForMember(dest => dest.UserRoles, opt => opt.Ignore());

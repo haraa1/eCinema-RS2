@@ -2,6 +2,7 @@
 using eCinema.Models.DTOs.Users;
 using eCinema.Models.Entities;
 using eCinema.Models.SearchObjects;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,7 @@ namespace eCinema.Services.Interfaces
     public interface IUserService : ICRUDService<UserDto, ActorSearch, UserInsertDto, UserUpdateDto>
     {
         Task<UserDto> Authenticate(string username, string password);
+        Task SetProfilePictureAsync(int id, IFormFile file);
+        Task<(byte[] Data, string ContentType)?> GetProfilePictureAsync(int id);
     }
 }

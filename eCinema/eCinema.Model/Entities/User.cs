@@ -14,6 +14,7 @@ namespace eCinema.Models.Entities
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
         public string PhoneNumber { get; set; }
+        public byte[]? ProfilePicture { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

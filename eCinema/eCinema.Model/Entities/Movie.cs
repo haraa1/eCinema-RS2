@@ -13,6 +13,7 @@ namespace eCinema.Model.Entities
         public DateTime ReleaseDate { get; set; }
         public MovieStatus Status { get; set; }
         public PgRating PgRating { get; set; }
+        public byte[]? PosterImage { get; set; }
 
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
         public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();

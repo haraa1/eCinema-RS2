@@ -17,6 +17,7 @@ namespace eCinema.Models.DTOs.Movies
         public DateTime ReleaseDate { get; set; }
         public MovieStatus Status { get; set; }
         public PgRating PgRating { get; set; }
+        public bool HasPoster { get; set; }
         public List<int> GenreIds { get; set; }
         public List<int> ActorIds { get; set; }
 

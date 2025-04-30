@@ -5,6 +5,7 @@ using eCinema.Models.DTOs.Users;
 using eCinema.Models.Entities;
 using eCinema.Models.SearchObjects;
 using eCinema.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -157,6 +158,28 @@ namespace eCinema.Services.Services
                 var hashBytes = sha256.ComputeHash(combinedBytes);
                 return Convert.ToBase64String(hashBytes);
             }
+        }
+
+        public async Task SetProfilePictureAsync(int id, IFormFile file)
+        {
+            var user = await _context.User.FindAsync(id)
+                       ?? throw new KeyNotFoundException("User not found");
+
+            await using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            user.ProfilePicture = ms.ToArray();
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<(byte[] Data, string ContentType)?> GetProfilePictureAsync(int id)
+        {
+            var data = await _context.User
+                       .Where(u => u.Id == id)
+                       .Select(u => u.ProfilePicture)
+                       .SingleOrDefaultAsync();
+
+            return data == null ? null : (data, "image/jpeg");
         }
     }
 }

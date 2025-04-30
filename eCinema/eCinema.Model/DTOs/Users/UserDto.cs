@@ -12,6 +12,7 @@ namespace eCinema.Models.DTOs.Users
         public string UserName { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string? PhoneNumber { get; set; }
+        public bool HasPicture { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
     }
 }
