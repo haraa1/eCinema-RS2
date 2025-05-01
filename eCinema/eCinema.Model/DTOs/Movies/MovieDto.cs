@@ -18,6 +18,7 @@ namespace eCinema.Models.DTOs.Movies
         public MovieStatus Status { get; set; }
         public PgRating PgRating { get; set; }
         public bool HasPoster { get; set; }
+        public string? PosterUrl { get; set; }
         public List<int> GenreIds { get; set; }
         public List<int> ActorIds { get; set; }
 

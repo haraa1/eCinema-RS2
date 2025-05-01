@@ -1,3 +1,4 @@
+// movie.dart
 import 'package:json_annotation/json_annotation.dart';
 
 part 'movie.g.dart';
@@ -14,7 +15,9 @@ class Movie {
   int? pgRating;
   List<int>? genreIds;
   List<int>? actorIds;
-  final String? posterUrl;
+
+  String? posterUrl;
+  bool hasPoster;
 
   Movie({
     this.id,
@@ -28,6 +31,7 @@ class Movie {
     this.genreIds,
     this.actorIds,
     this.posterUrl,
+    this.hasPoster = false,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) => _$MovieFromJson(json);

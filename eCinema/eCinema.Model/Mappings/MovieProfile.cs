@@ -15,11 +15,17 @@ namespace eCinema.Models.Mappings
         {
             CreateMap<Movie, MovieDto>()
                 .ForMember(dest => dest.ActorIds,
-                           opt => opt.MapFrom(s => s.MovieActors.Select(ma => ma.ActorId)))
+                           opt => opt.MapFrom(s => s.MovieActors.Select(ma => ma.ActorId).ToList()))
                 .ForMember(dest => dest.GenreIds,
-                           opt => opt.MapFrom(s => s.MovieGenres.Select(mg => mg.GenreId)))
+                           opt => opt.MapFrom(s => s.MovieGenres.Select(mg => mg.GenreId).ToList()))
                 .ForMember(dest => dest.HasPoster,
-                           opt => opt.MapFrom(s => s.PosterImage != null));
+                           opt => opt.MapFrom(s => s.PosterImage != null))
+                .ForMember(dest => dest.PosterUrl,
+                           opt => opt.MapFrom(s =>
+                               s.PosterImage != null
+                                   ? $"/Movie/{s.Id}/poster"
+                                   : null));
+
             CreateMap<MovieInsertDto, Movie>();
             CreateMap<MovieUpdateDto, Movie>();
         }

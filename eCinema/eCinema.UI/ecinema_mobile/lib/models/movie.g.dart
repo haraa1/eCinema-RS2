@@ -27,6 +27,7 @@ Movie _$MovieFromJson(Map<String, dynamic> json) => Movie(
           ?.map((e) => (e as num).toInt())
           .toList(),
   posterUrl: json['posterUrl'] as String?,
+  hasPoster: json['hasPoster'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$MovieToJson(Movie instance) => <String, dynamic>{
@@ -41,4 +42,5 @@ Map<String, dynamic> _$MovieToJson(Movie instance) => <String, dynamic>{
   'genreIds': instance.genreIds,
   'actorIds': instance.actorIds,
   'posterUrl': instance.posterUrl,
+  'hasPoster': instance.hasPoster,
 };
