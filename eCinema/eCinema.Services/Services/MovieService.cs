@@ -61,6 +61,17 @@ namespace eCinema.Services.Services
                         .Include(m => m.MovieGenres);
         }
 
+        public override async Task<MovieDto> GetById(int id)
+        {
+            var entity = await _context.Movies
+                .Include(m => m.MovieActors)
+                .Include(m => m.MovieGenres)
+                .FirstOrDefaultAsync(m => m.Id == id)
+                ?? throw new KeyNotFoundException("Movie not found");
+
+            return _mapper.Map<MovieDto>(entity);
+        }
+
         public async Task SetPosterAsync(int id, IFormFile file)
         {
             if (file == null || file.Length == 0)

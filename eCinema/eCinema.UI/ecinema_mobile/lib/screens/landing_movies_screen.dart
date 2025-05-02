@@ -49,35 +49,36 @@ class LandingShowtimesController extends ChangeNotifier {
   }
 
   void _applyFilters() {
-    final selectedCinemaIds =
-        _selectedCity != null ? cityMap[_selectedCity] ?? [] : [];
+    final uniqueByMovie = <int, Showtime>{};
+
+    for (var show in allShowtimes) {
+      if (_selectedCity != null &&
+          !(cityMap[_selectedCity]?.contains(show.cinema.id) ?? false)) {
+        continue;
+      }
+
+      if (_currentTab == ShowtimesTab.active && show.movie.status != 1)
+        continue;
+      if (_currentTab == ShowtimesTab.upcoming && show.movie.status != 0)
+        continue;
+
+      if (_search.isNotEmpty &&
+          !(show.movie.title ?? '').toLowerCase().contains(
+            _search.toLowerCase(),
+          )) {
+        continue;
+      }
+
+      final movieId = show.movie.id!;
+      if (!uniqueByMovie.containsKey(movieId) ||
+          show.startTime.isBefore(uniqueByMovie[movieId]!.startTime)) {
+        uniqueByMovie[movieId] = show;
+      }
+    }
 
     showtimes
       ..clear()
-      ..addAll(
-        allShowtimes.where((show) {
-          if (selectedCinemaIds.isNotEmpty &&
-              !selectedCinemaIds.contains(show.cinema.id)) {
-            return false;
-          }
-
-          if (_currentTab == ShowtimesTab.active && show.movie.status != 1) {
-            return false;
-          }
-          if (_currentTab == ShowtimesTab.upcoming && show.movie.status != 0) {
-            return false;
-          }
-
-          if (_search.isNotEmpty &&
-              !(show.movie.title ?? '').toLowerCase().contains(
-                _search.toLowerCase(),
-              )) {
-            return false;
-          }
-
-          return true;
-        }),
-      );
+      ..addAll(uniqueByMovie.values);
   }
 
   void setCity(String city) {

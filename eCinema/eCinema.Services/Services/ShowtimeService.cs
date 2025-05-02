@@ -21,7 +21,8 @@ namespace eCinema.Services.Services
         }
         public override IQueryable<Showtime> AddInclude(IQueryable<Showtime> query, BaseSearchObject search = null)
         {
-            return query.Include(s => s.Movie)
+            return query.Include(s => s.Movie).ThenInclude(s => s.MovieGenres)
+                        .Include(s=> s.Movie).ThenInclude(s=>s.MovieActors)
                         .Include(s => s.CinemaHall).ThenInclude(s => s.Cinema);
         }
 
@@ -30,7 +31,8 @@ namespace eCinema.Services.Services
             var inserted = await base.Insert(dto);
 
             var loaded = await _context.Showtime
-                             .Include(s => s.Movie)
+                             .Include(s => s.Movie).ThenInclude(m => m.MovieGenres)
+                             .Include(s => s.Movie).ThenInclude(m => m.MovieActors)
                              .Include(s => s.CinemaHall)
                                  .ThenInclude(ch => ch.Cinema)
                              .AsNoTracking()
@@ -39,5 +41,20 @@ namespace eCinema.Services.Services
             return _mapper.Map<ShowtimeDto>(loaded);
         }
 
+        public override async Task<ShowtimeDto> GetById(int id)
+        {
+            var entity = await _context.Showtime
+                .Include(s => s.Movie)
+                    .ThenInclude(m => m.MovieGenres)
+                .Include(s => s.Movie)
+                    .ThenInclude(m => m.MovieActors)
+                .Include(s => s.CinemaHall)
+                    .ThenInclude(ch => ch.Cinema)
+                .Include(s => s.Bookings)   
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            return _mapper.Map<ShowtimeDto>(entity);
+        }
     }
 }
