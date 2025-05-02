@@ -1,3 +1,4 @@
+import 'package:ecinema_mobile/screens/movie_details_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/showtime.dart';
 
@@ -44,41 +45,55 @@ class ShowtimeCard extends StatelessWidget {
     final start = TimeOfDay.fromDateTime(showtime.startTime);
     final end = TimeOfDay.fromDateTime(showtime.endTime);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Container(color: Colors.grey[200], child: _buildPoster()),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => MovieDetailsScreen(
+                  showtimeId: showtime.id!,
+                  cinemaId: showtime.cinema.id,
+                ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  showtime.movie.title ?? 'Bez naslova',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'od ${showtime.basePrice.toStringAsFixed(0)} KM',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
-                ),
-              ],
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(color: Colors.grey[200], child: _buildPoster()),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    showtime.movie.title ?? 'Bez naslova',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'od ${showtime.basePrice.toStringAsFixed(0)} KM',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
