@@ -1,4 +1,3 @@
-// movie_provider.dart ✅
 import 'package:ecinema_desktop/models/movie.dart';
 import 'package:ecinema_desktop/providers/base_provider.dart';
 

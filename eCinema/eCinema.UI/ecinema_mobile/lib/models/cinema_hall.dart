@@ -1,20 +1,17 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'seat.dart';
 
 part 'cinema_hall.g.dart';
 
 @JsonSerializable()
 class CinemaHall {
-  final int id;
-  final String name;
-  final int capacity;
-  final int cinemaId;
+  int? id;
+  String? name;
+  int? capacity;
+  int? cinemaId;
+  List<Seat>? seats;
 
-  CinemaHall({
-    required this.id,
-    required this.name,
-    required this.capacity,
-    required this.cinemaId,
-  });
+  CinemaHall({this.id, this.name, this.capacity, this.cinemaId, this.seats});
 
   factory CinemaHall.fromJson(Map<String, dynamic> json) =>
       _$CinemaHallFromJson(json);

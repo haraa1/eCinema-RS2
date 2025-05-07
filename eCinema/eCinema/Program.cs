@@ -20,6 +20,10 @@ builder.Services.AddTransient<ISeatTypeService, SeatTypeService>();
 builder.Services.AddTransient<IShowtimeService, ShowtimeService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoleService, RoleService>();
+builder.Services.AddTransient<ITicketService, TicketService>();
+builder.Services.AddTransient<ITicketTypeService, TicketTypeService>();
+builder.Services.AddTransient<IBookingService, BookingService>();
+builder.Services.AddTransient<IBookingConcessionsService, BookingConcessionsService>();
 
 
 // Add services to the container.
@@ -30,6 +34,9 @@ builder.Services.AddAutoMapper(typeof(MovieProfile));
 builder.Services.AddAutoMapper(typeof(CinemaProfile));
 builder.Services.AddAutoMapper(typeof(UserProfile));
 builder.Services.AddAutoMapper(typeof(ShowtimeProfile));
+builder.Services.AddAutoMapper(typeof(TicketTypeProfile));
+builder.Services.AddAutoMapper(typeof(BookingProfile));
+builder.Services.AddAutoMapper(typeof(TicketProfile));
 
 
 builder.Services.AddControllers();

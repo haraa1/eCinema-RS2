@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:ecinema_mobile/providers/booking_state.dart';
+import 'package:ecinema_mobile/providers/movie_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecinema_mobile/screens/landing_movies_screen.dart';
@@ -12,6 +14,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LandingShowtimesController()),
+        ChangeNotifierProvider(create: (_) => BookingState()),
+        ChangeNotifierProvider(create: (_) => MovieProvider()),
       ],
       child: const MyApp(),
     ),

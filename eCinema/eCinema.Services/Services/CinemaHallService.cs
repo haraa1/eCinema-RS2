@@ -102,23 +102,31 @@ namespace eCinema.Services.Services
         public async Task AddSeats(int hallId, AddSeatsDto dto)
         {
             var hall = await _context.CinemaHalls.FindAsync(hallId);
+
             if (hall == null)
                 throw new Exception("Cinema hall not found");
 
+            int seatsPerRow = 10;
             for (int i = 0; i < dto.NumberOfSeats; i++)
             {
+                int rowIndex = i / seatsPerRow;
+                string rowLetter = ((char)('A' + rowIndex)).ToString();
+
                 var newSeat = new Seat
                 {
                     CinemaHallId = hallId,
                     SeatTypeId = dto.DefaultSeatTypeId,
                     isAvailable = true,
-                    Number = i + 1,
-                    Row = "Default"
+                    Number = (i % seatsPerRow) + 1,
+                    Row = rowLetter
                 };
+
                 _context.Seats.Add(newSeat);
             }
+
             await _context.SaveChangesAsync();
         }
+
 
         public async Task RemoveSeats(int hallId, RemoveSeatsDto dto)
         {

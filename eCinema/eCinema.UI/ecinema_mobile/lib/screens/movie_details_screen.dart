@@ -1,3 +1,4 @@
+import 'package:ecinema_mobile/screens/ticket_selection_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/showtime.dart';
 import '../models/actor.dart';
@@ -180,7 +181,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     final grouped = <String, List<Showtime>>{};
     for (final s in filtered) {
       final key = s.cinemaHall.name;
-      grouped.putIfAbsent(key, () => []).add(s);
+      grouped.putIfAbsent(key!, () => []).add(s);
     }
 
     return grouped.entries.map((entry) {
@@ -203,7 +204,14 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                   '${s.basePrice.toStringAsFixed(0)} KM',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TicketSelectionScreen(showtime: s),
+                    ),
+                  );
+                },
               ),
             );
           }),

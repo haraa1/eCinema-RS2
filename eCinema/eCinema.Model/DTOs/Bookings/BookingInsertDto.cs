@@ -1,5 +1,4 @@
 ﻿using eCinema.Models.DTOs.BookingConcessions;
-using eCinema.Models.DTOs.Showtimes;
 using eCinema.Models.DTOs.Tickets;
 using System;
 using System.Collections.Generic;
@@ -9,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace eCinema.Models.DTOs.Bookings
 {
-    public class BookingDto
+    public class BookingInsertDto
     {
-        public int Id { get; set; }
         public int UserId { get; set; }
         public int ShowtimeId { get; set; }
         public DateTime BookingTime { get; set; }
         public string? DiscountCode { get; set; }
-        public List<TicketDto> Tickets { get; set; } = new List<TicketDto>();
 
-        public List<BookingConcessionDto> BookingConcessions { get; set; }
-            = new List<BookingConcessionDto>();
+        public List<TicketInsertDto> Tickets { get; set; } = new List<TicketInsertDto>();
+        public List<BookingConcessionInsertDto> BookingConcessions { get; set; } = new List<BookingConcessionInsertDto>();
     }
 }
