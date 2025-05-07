@@ -1,4 +1,5 @@
-﻿using eCinema.Model.Entities;
+﻿using CinemaApp.Domain.Entities;
+using eCinema.Model.Entities;
 using eCinema.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -168,6 +169,9 @@ namespace eCinema.Models
                 entity.Property(e => e.PasswordSalt).IsRequired();
                 entity.Property(e => e.PhoneNumber).HasMaxLength(20);
                 entity.Property(e => e.CreatedAt).IsRequired();
+
+                entity.HasIndex(e=> e.UserName).IsUnique();
+                entity.HasIndex(e=> e.Email).IsUnique();
             });
 
             modelBuilder.Entity<Showtime>(entity =>
@@ -203,7 +207,12 @@ namespace eCinema.Models
                     .WithMany(s => s.Bookings)
                     .HasForeignKey(b => b.ShowtimeId)
                     .OnDelete(DeleteBehavior.Restrict);
-              
+
+                entity.HasOne(b => b.Payment)
+                    .WithOne(p => p.Booking)
+                    .HasForeignKey<Payment>(p => p.BookingId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
             });
             modelBuilder.Entity<Ticket>(entity =>
             {
@@ -285,6 +294,35 @@ namespace eCinema.Models
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Amount)
+                      .HasColumnType("bigint")
+                      .IsRequired();
+
+                entity.Property(e => e.Currency)
+                      .IsRequired()
+                      .IsFixedLength()
+                      .HasMaxLength(3)
+                      .HasDefaultValue("bam");
+
+                entity.Property(e => e.StripePaymentIntentId).HasMaxLength(255);
+                entity.Property(e => e.StripeChargeId).HasMaxLength(255);
+
+                entity.Property(e => e.Status)
+                      .IsRequired()
+                      .HasConversion<int>();
+
+                entity.Property(e => e.CreatedAt)
+                      .HasColumnType("datetime2")
+                      .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.SucceededAt).HasColumnType("datetime2");
+                entity.Property(e => e.FailedAt).HasColumnType("datetime2");
+                entity.Property(e => e.RefundedAt).HasColumnType("datetime2");
+            });
 
 
         }
