@@ -35,19 +35,26 @@ namespace eCinema.Services.Services
 
         public override async Task BeforeInsert(User entity, UserInsertDto insert)
         {
+            if (await _context.User.AnyAsync(u => u.UserName == insert.UserName))
+                throw new ArgumentException("Username is already taken");
+
+            if (await _context.User.AnyAsync(u => u.Email == insert.Email))
+                throw new ArgumentException("Email is already taken");
+
             entity.PasswordSalt = GenerateSalt();
             entity.PasswordHash = GenerateHash(entity.PasswordSalt, insert.Password);
 
-            if (insert.RoleIds != null && insert.RoleIds.Any())
+            if (insert.RoleIds == null || !insert.RoleIds.Any())
             {
-                var rolesToAdd = await _context.Roles
-                                           .Where(r => insert.RoleIds.Contains(r.Id))
-                                           .ToListAsync();
+                insert.RoleIds = await _context.Roles
+                                  .Where(r => r.Name == "User")
+                                  .Select(r => r.Id)
+                                  .ToListAsync();
+            }
 
-                foreach (var role in rolesToAdd)
-                {
-                    entity.UserRoles.Add(new UserRole { Role = role });
-                }
+            foreach (var roleId in insert.RoleIds)
+            {
+                entity.UserRoles.Add(new UserRole { RoleId = roleId });
             }
         }
 

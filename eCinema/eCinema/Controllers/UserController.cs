@@ -41,5 +41,26 @@ namespace eCinema.Controllers
                  ? NotFound()
                  : File(pic.Value.Data, pic.Value.ContentType);
         }
+
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<ActionResult<UserDto>> Register([FromBody] UserRegisterDto dto)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            var insert = new UserInsertDto
+            {
+                UserName = dto.UserName,
+                Email = dto.Email,
+                Password = dto.Password,
+                ConfirmPassword = dto.ConfirmPassword,
+                PhoneNumber = dto.PhoneNumber,
+                RoleIds = null
+            };
+
+            var created = await _userService.Insert(insert);
+
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
     }
 }
