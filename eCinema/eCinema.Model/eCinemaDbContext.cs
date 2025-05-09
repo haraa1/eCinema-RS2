@@ -163,6 +163,7 @@ namespace eCinema.Models
             {
                 entity.HasKey(e => e.Id);
 
+                entity.Property(e => e.FullName).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.UserName).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.PasswordHash).IsRequired();
