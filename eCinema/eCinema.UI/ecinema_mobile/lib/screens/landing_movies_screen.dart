@@ -1,3 +1,4 @@
+import 'package:ecinema_mobile/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/showtime.dart';
@@ -187,6 +188,15 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
         onChanged: ctrl.setSearch,
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.login),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          },
+        ),
         if (ctrl.cityMap.isNotEmpty)
           PopupMenuButton<String>(
             onSelected: (city) => ctrl.setCity(city),

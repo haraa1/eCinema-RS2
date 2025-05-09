@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:ecinema_mobile/screens/ticket_selection_screen.dart';
+import 'package:ecinema_mobile/utils/utils.dart';
 import 'package:flutter/material.dart';
 import '../models/showtime.dart';
 import '../models/actor.dart';
@@ -97,7 +100,14 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
             aspectRatio: 16 / 9,
             child:
                 posterUrl != null
-                    ? Image.network(posterUrl, fit: BoxFit.cover)
+                    ? Image.network(
+                      posterUrl,
+                      headers: {
+                        'Authorization':
+                            'Basic ${base64Encode(utf8.encode('${Authorization.username}:${Authorization.password}'))}',
+                      },
+                      fit: BoxFit.cover,
+                    )
                     : const Center(child: Icon(Icons.image, size: 80)),
           ),
           Expanded(

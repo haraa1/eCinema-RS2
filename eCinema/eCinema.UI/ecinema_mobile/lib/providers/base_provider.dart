@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 
 abstract class BaseProvider<T> with ChangeNotifier {
   static String? _baseUrl;
+  static String get baseUrl => _baseUrl!;
   String? _endpoint;
 
   HttpClient client = new HttpClient();
@@ -55,7 +56,6 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
 
     Map<String, String> headers = createHeaders();
-    print("get me");
     var response = await http!.get(uri, headers: headers);
     print("done $response");
     if (isValidResponseCode(response)) {

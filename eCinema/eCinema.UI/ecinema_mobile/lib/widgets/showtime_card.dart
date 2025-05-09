@@ -1,6 +1,7 @@
 import 'package:ecinema_mobile/screens/movie_details_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/showtime.dart';
+import 'package:ecinema_mobile/providers/movie_provider.dart';
 
 class ShowtimeCard extends StatelessWidget {
   final Showtime showtime;
@@ -20,10 +21,12 @@ class ShowtimeCard extends StatelessWidget {
   Widget _buildPoster() {
     final movie = showtime.movie;
     final posterUrl = _fullPosterUrl();
+    final headers = MovieProvider().createHeaders();
 
     if (movie.hasPoster && posterUrl != null) {
       return Image.network(
         posterUrl,
+        headers: headers,
         fit: BoxFit.cover,
         loadingBuilder: (ctx, child, progress) {
           if (progress == null) return child;

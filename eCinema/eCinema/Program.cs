@@ -25,6 +25,8 @@ builder.Services.AddTransient<ITicketTypeService, TicketTypeService>();
 builder.Services.AddTransient<IBookingService, BookingService>();
 builder.Services.AddTransient<IBookingConcessionsService, BookingConcessionsService>();
 
+builder.Services.AddHttpContextAccessor();
+
 
 // Add services to the container.
 builder.Services.AddDbContext<eCinemaDbContext>(options =>
@@ -77,6 +79,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFlutterApps"); // Enable CORS with the defined policy
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

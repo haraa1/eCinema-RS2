@@ -58,6 +58,25 @@ namespace eCinema.Services.Services
             }
         }
 
+        public override async Task<UserDto> Insert(UserInsertDto dto)
+        {
+            var entity = _mapper.Map<User>(dto);
+
+            await BeforeInsert(entity, dto);
+
+            _context.User.Add(entity);
+            await _context.SaveChangesAsync();
+
+            var fresh = await _context.User
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .SingleAsync(u => u.Id == entity.Id);
+
+            return _mapper.Map<UserDto>(fresh);
+        }
+
+
+
         public override async Task<UserDto> Update(int id, UserUpdateDto update)
         {
             var entity = await _context.Set<User>()
