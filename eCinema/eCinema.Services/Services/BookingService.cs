@@ -5,6 +5,7 @@ using eCinema.Models.DTOs.Bookings;
 using eCinema.Models.Entities;
 using eCinema.Models.SearchObjects;
 using eCinema.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -15,66 +16,74 @@ namespace eCinema.Services.Services
 {
     public class BookingService : BaseCRUDService<BookingDto, Booking, BaseSearchObject, BookingInsertDto, BookingUpdateDto>, IBookingService
     {
+        private readonly IHttpContextAccessor _http;
+
         private readonly ITicketService _ticketService;
         private readonly IBookingConcessionsService _bookingConcessionsService;
 
         public BookingService(
             eCinemaDbContext context,
             IMapper mapper,
+            IHttpContextAccessor http,
             ITicketService ticketService,
             IBookingConcessionsService bookingConcessionsService)
             : base(context, mapper)
         {
+            _http = http;
             _ticketService = ticketService;
             _bookingConcessionsService = bookingConcessionsService;
         }
 
         public override async Task<BookingDto> Insert(BookingInsertDto insert)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            var claimValue = _http.HttpContext?.User?
+                .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?.Value;
+
+            if (!int.TryParse(claimValue, out var userId))
+                throw new UnauthorizedAccessException("User-id claim missing.");
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
                 var bookingEntity = _mapper.Map<Booking>(insert);
+                bookingEntity.UserId = userId;
 
                 if (insert.Tickets != null && insert.Tickets.Any())
                 {
                     bookingEntity.Tickets.Clear();
 
-                    foreach (var ticketInsert in insert.Tickets)
+                    foreach (var t in insert.Tickets)
                     {
-                        var ticket = new Ticket
+                        bookingEntity.Tickets.Add(new Ticket
                         {
-                            SeatId = ticketInsert.SeatId,
-                            TicketTypeId = ticketInsert.TicketTypeId,
-                            Price = ticketInsert.Price
-                        };
-                        bookingEntity.Tickets.Add(ticket);
+                            SeatId = t.SeatId,
+                            TicketTypeId = t.TicketTypeId,
+                            Price = t.Price
+                        });
                     }
                 }
 
                 if (insert.BookingConcessions != null && insert.BookingConcessions.Any())
                 {
-                    foreach (var concessionInsert in insert.BookingConcessions)
+                    foreach (var c in insert.BookingConcessions)
                     {
-                        var bookingConcession = new BookingConcession
+                        bookingEntity.BookingConcessions.Add(new BookingConcession
                         {
-                            ConcessionId = concessionInsert.ConcessionId,
-                            Quantity = concessionInsert.Quantity
-                        };
-                        bookingEntity.BookingConcessions.Add(bookingConcession);
+                            ConcessionId = c.ConcessionId,
+                            Quantity = c.Quantity
+                        });
                     }
                 }
 
                 _context.Bookings.Add(bookingEntity);
-
                 await _context.SaveChangesAsync();
 
-                var updatedBooking = await GetBookingWithDetails(bookingEntity.Id);
-
+                var result = await GetBookingWithDetails(bookingEntity.Id);
                 await transaction.CommitAsync();
 
-                return updatedBooking;
+                return result;
             }
             catch (Exception ex)
             {

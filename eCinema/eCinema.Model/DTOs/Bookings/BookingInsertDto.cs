@@ -10,7 +10,6 @@ namespace eCinema.Models.DTOs.Bookings
 {
     public class BookingInsertDto
     {
-        public int UserId { get; set; }
         public int ShowtimeId { get; set; }
         public DateTime BookingTime { get; set; }
         public string? DiscountCode { get; set; }

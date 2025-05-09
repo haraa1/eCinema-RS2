@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:ecinema_mobile/providers/booking_state.dart';
+import 'package:ecinema_mobile/providers/movie_provider.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> submitBooking(BookingState state) async {
@@ -8,7 +9,6 @@ Future<void> submitBooking(BookingState state) async {
   final selectedConcessions = state.selectedConcessions;
 
   final body = {
-    "userId": 24, // hardcoded user for now
     "showtimeId": state.showtimeId,
     "bookingTime": DateTime.now().toIso8601String(),
     "discountCode": "",
@@ -33,7 +33,7 @@ Future<void> submitBooking(BookingState state) async {
   try {
     final response = await http.post(
       uri,
-      headers: {"Content-Type": "application/json"},
+      headers: MovieProvider().createHeaders(),
       body: jsonEncode(body),
     );
 
