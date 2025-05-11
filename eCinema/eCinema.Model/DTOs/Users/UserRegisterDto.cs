@@ -10,6 +10,8 @@ namespace eCinema.Models.DTOs.Users
     public class UserRegisterDto
     {
         [Required, StringLength(50)]
+        public string FullName { get; set; } = null!;
+        [Required, StringLength(50)]
         public string UserName { get; set; } = null!;
 
         [Required, EmailAddress]

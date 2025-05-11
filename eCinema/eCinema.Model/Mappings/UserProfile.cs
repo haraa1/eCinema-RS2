@@ -27,6 +27,9 @@ namespace eCinema.Models.Mappings
             CreateMap<UserUpdateDto, User>()
              .ForMember(dest => dest.UserRoles, opt => opt.Ignore());
 
+            CreateMap<UserRegisterDto, UserInsertDto>();
+
+
         }
     }
 }

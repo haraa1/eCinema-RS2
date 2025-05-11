@@ -13,6 +13,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _fullNameCtrl = TextEditingController();
   final _usernameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -23,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _fullNameCtrl.dispose();
     _usernameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -36,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = true);
 
     final newUser = User(
+      fullName: _fullNameCtrl.text.trim(),
       userName: _usernameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       password: _passwordCtrl.text,
@@ -122,6 +125,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    TextFormField(
+                      controller: _fullNameCtrl,
+                      decoration: _decor('Ime i prezime', Icons.person),
+                      validator:
+                          (v) =>
+                              (v == null || v.trim().isEmpty)
+                                  ? 'Obavezno'
+                                  : null,
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _usernameCtrl,
                       decoration: _decor('Korisničko ime', Icons.person),

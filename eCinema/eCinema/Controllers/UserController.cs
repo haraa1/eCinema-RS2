@@ -5,6 +5,7 @@ using eCinema.Services.Interfaces;
 using eCinema.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace eCinema.Controllers
 {
@@ -50,6 +51,7 @@ namespace eCinema.Controllers
 
             var insert = new UserInsertDto
             {
+                FullName = dto.FullName,
                 UserName = dto.UserName,
                 Email = dto.Email,
                 Password = dto.Password,
@@ -61,6 +63,21 @@ namespace eCinema.Controllers
             var created = await _userService.Insert(insert);
 
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<UserDto>> Me()
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(idClaim) || !int.TryParse(idClaim, out var userId))
+                return Unauthorized();
+
+            var user = await _userService.GetById(userId);
+            if (user == null)
+                return NotFound();
+
+            return Ok(user);
         }
     }
 }
