@@ -165,13 +165,6 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Projekcije'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-        ],
-      ),
     );
   }
 

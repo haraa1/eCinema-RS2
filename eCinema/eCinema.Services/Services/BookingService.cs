@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using eCinema.Model.Entities;
 using eCinema.Models;
 using eCinema.Models.DTOs.Bookings;
@@ -116,5 +117,31 @@ namespace eCinema.Services.Services
                 .Include(b => b.User)
                 .Include(b => b.Showtime);
         }
+
+        public async Task<IEnumerable<BookingDto>> GetCurrentUserBookings()
+        {
+            var claim = _http.HttpContext?.User?
+                        .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+            if (claim == null)
+                throw new UnauthorizedAccessException("Cannot find user ID in claims.");
+
+            var userId = int.Parse(claim.Value);
+
+            var query = _context.Bookings
+                .Where(b => b.UserId == userId)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.TicketType)
+                .Include(b => b.Tickets)
+                    .ThenInclude(t => t.Seat)
+                .Include(b => b.BookingConcessions)
+                    .ThenInclude(bc => bc.Concession)
+                .Include(b => b.Showtime);
+
+            var entities = await query.ToListAsync();
+
+            return _mapper.Map<IEnumerable<BookingDto>>(entities);
+        }
+
     }
 }

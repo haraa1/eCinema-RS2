@@ -1,3 +1,4 @@
+import 'package:ecinema_mobile/screens/main_screen.dart';
 import 'package:ecinema_mobile/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await movieProvider.get();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LandingShowtimesScreen()),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     } catch (e) {
       if (!mounted) return;

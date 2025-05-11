@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:ecinema_mobile/providers/booking_state.dart';
 import 'package:ecinema_mobile/providers/movie_provider.dart';
 import 'package:ecinema_mobile/providers/user_provider.dart';
+import 'package:ecinema_mobile/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecinema_mobile/screens/landing_movies_screen.dart';
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
       title: 'eCinema',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.deepPurple),
-      home: const LandingShowtimesScreen(),
+      home: const MainScreen(),
     );
   }
 }

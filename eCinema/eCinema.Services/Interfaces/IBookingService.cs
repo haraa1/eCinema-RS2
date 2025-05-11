@@ -11,5 +11,6 @@ namespace eCinema.Services.Interfaces
 {
     public interface IBookingService : ICRUDService<BookingDto, BaseSearchObject, BookingInsertDto, BookingUpdateDto>
     {
+        Task<IEnumerable<BookingDto>> GetCurrentUserBookings();
     }
 }
