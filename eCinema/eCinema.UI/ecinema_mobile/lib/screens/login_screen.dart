@@ -40,8 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await movieProvider.get();
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const MainScreen()),
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
@@ -155,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextButton(
-                          onPressed: () {}, // TODO: Forgot password navigation
+                          onPressed: () {},
                           child: const Text('Zaboravili lozinku?'),
                         ),
                         TextButton(

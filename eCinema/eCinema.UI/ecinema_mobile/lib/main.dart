@@ -18,7 +18,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => LandingShowtimesController()),
         ChangeNotifierProvider(create: (_) => BookingState()),
         ChangeNotifierProvider(create: (_) => MovieProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(
+          create: (_) => UserProvider()..loadCurrentUser(),
+        ),
       ],
       child: const MyApp(),
     ),

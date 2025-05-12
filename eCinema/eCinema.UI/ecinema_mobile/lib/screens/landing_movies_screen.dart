@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/showtime.dart';
 import '../providers/showtime_provider.dart';
 import '../providers/cinema_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/showtime_card.dart';
 
 enum ShowtimesTab { active, upcoming, recommended }
@@ -21,7 +22,7 @@ class LandingShowtimesController extends ChangeNotifier {
   String _search = '';
   String? _selectedCity;
 
-  Future<void> load() async {
+  Future<void> load({String? language}) async {
     if (isLoading) return;
 
     isLoading = true;
@@ -34,9 +35,15 @@ class LandingShowtimesController extends ChangeNotifier {
         cityMap.putIfAbsent(cinema.city, () => []).add(cinema.id);
       }
 
-      final page = await _showtimeProvider.get({});
-      allShowtimes.clear();
-      allShowtimes.addAll(page);
+      final filters = <String, dynamic>{};
+      if (language?.isNotEmpty ?? false) {
+        filters['Language'] = language;
+      }
+
+      final page = await _showtimeProvider.get(filters);
+      allShowtimes
+        ..clear()
+        ..addAll(page);
 
       if (cityMap.isNotEmpty && _selectedCity == null) {
         _selectedCity = cityMap.keys.first;
@@ -57,12 +64,10 @@ class LandingShowtimesController extends ChangeNotifier {
           !(cityMap[_selectedCity]?.contains(show.cinema.id) ?? false)) {
         continue;
       }
-
       if (_currentTab == ShowtimesTab.active && show.movie.status != 1)
         continue;
       if (_currentTab == ShowtimesTab.upcoming && show.movie.status != 0)
         continue;
-
       if (_search.isNotEmpty &&
           !(show.movie.title ?? '').toLowerCase().contains(
             _search.toLowerCase(),
@@ -126,8 +131,12 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProv = context.read<UserProvider>();
       final ctrl = context.read<LandingShowtimesController>();
-      ctrl.load();
+      userProv.loadCurrentUser().then((_) {
+        final lang = userProv.current?.preferredLanguage;
+        ctrl.load(language: lang);
+      });
     });
   }
 
@@ -156,9 +165,8 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
                 }
                 return ListView.builder(
                   itemCount: ctrl.showtimes.length,
-                  itemBuilder: (_, i) {
-                    return ShowtimeCard(showtime: ctrl.showtimes[i]);
-                  },
+                  itemBuilder:
+                      (_, i) => ShowtimeCard(showtime: ctrl.showtimes[i]),
                 );
               },
             ),
@@ -184,9 +192,9 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
         IconButton(
           icon: const Icon(Icons.login),
           onPressed: () {
-            Navigator.push(
-              context,
+            Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
             );
           },
         ),

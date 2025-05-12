@@ -1,3 +1,4 @@
+import 'package:ecinema_mobile/screens/landing_movies_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,9 +13,6 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<UserProvider>(
-          create: (_) => UserProvider()..loadCurrentUser(),
-        ),
         ChangeNotifierProvider<BookingProvider>(
           create: (_) => BookingProvider()..loadMyBookings(),
         ),
@@ -158,11 +156,74 @@ class _ReservationsTab extends StatelessWidget {
   }
 }
 
-class _PreferencesTab extends StatelessWidget {
+class _PreferencesTab extends StatefulWidget {
   const _PreferencesTab();
+  @override
+  State<_PreferencesTab> createState() => _PreferencesTabState();
+}
+
+class _PreferencesTabState extends State<_PreferencesTab> {
+  final List<String> _languages = ['English', 'Enggg'];
+  String? _selectedLanguage;
+
+  @override
+  void initState() {
+    super.initState();
+    final userLang = context.read<UserProvider>().current?.preferredLanguage;
+    _selectedLanguage = _languages.contains(userLang) ? userLang : null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text(''));
+    final user = context.watch<UserProvider>().current;
+    if (user == null) return const Center(child: CircularProgressIndicator());
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          DropdownButtonFormField<String>(
+            value:
+                _languages.contains(_selectedLanguage)
+                    ? _selectedLanguage
+                    : null,
+            decoration: const InputDecoration(labelText: 'Preferirana jezik'),
+            items:
+                _languages
+                    .map(
+                      (lang) =>
+                          DropdownMenuItem(value: lang, child: Text(lang)),
+                    )
+                    .toList(),
+            onChanged: (lang) => setState(() => _selectedLanguage = lang),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed:
+                (_selectedLanguage == null ||
+                        _selectedLanguage == user.preferredLanguage)
+                    ? null
+                    : () async {
+                      try {
+                        await context.read<UserProvider>().updatePreferences(
+                          _selectedLanguage!,
+                        );
+                        context.read<LandingShowtimesController>().load(
+                          language: _selectedLanguage,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Preference sačuvane')),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                      }
+                    },
+            child: const Text('Sačuvaj'),
+          ),
+        ],
+      ),
+    );
   }
 }

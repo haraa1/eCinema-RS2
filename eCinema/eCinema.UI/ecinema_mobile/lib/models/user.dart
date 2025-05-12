@@ -10,6 +10,7 @@ class User {
   final String userName;
   final String email;
   final String phoneNumber;
+  final String? preferredLanguage;
   final bool? hasPicture;
   final List<String>? roles;
   final String? password;
@@ -22,6 +23,7 @@ class User {
     required this.userName,
     required this.email,
     required this.phoneNumber,
+    this.preferredLanguage,
     this.hasPicture,
     this.roles,
     this.password,

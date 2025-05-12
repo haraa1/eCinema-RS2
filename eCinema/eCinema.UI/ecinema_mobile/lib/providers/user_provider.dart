@@ -54,4 +54,21 @@ class UserProvider extends BaseProvider<User> {
     _busy = false;
     notifyListeners();
   }
+
+  Future<void> updatePreferences(String language) async {
+    final uri = Uri.parse('${BaseProvider.baseUrl}User/me/preferences');
+    final resp = await http!.patch(
+      uri,
+      headers: createHeaders(),
+      body: jsonEncode({'preferredLanguage': language}),
+    );
+    if (resp.statusCode == 200) {
+      _current = User.fromJson(jsonDecode(resp.body));
+      notifyListeners();
+    } else {
+      throw Exception(
+        'Failed to save preferences (${resp.statusCode}): ${resp.body}',
+      );
+    }
+  }
 }
