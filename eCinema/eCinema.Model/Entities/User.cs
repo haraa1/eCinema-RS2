@@ -17,6 +17,9 @@ namespace eCinema.Models.Entities
         public string PhoneNumber { get; set; }
         public byte[]? ProfilePicture { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool Notify { get; set; }
+        public string? PreferredLanguage { get; set; }
+
 
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
