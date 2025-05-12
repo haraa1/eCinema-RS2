@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Interfaces
 {
-    public interface IShowtimeService : ICRUDService<ShowtimeDto, BaseSearchObject, ShowtimeInsertDto, ShowtimeUpdateDto>
+    public interface IShowtimeService : ICRUDService<ShowtimeDto, ShowtimeSearchObject, ShowtimeInsertDto, ShowtimeUpdateDto>
     {
 
     }

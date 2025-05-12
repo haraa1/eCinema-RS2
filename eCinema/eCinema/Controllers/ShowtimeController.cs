@@ -8,10 +8,10 @@ namespace eCinema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ShowtimeController : BaseCRUDController<ShowtimeDto, BaseSearchObject, ShowtimeInsertDto, ShowtimeUpdateDto>
+    public class ShowtimeController : BaseCRUDController<ShowtimeDto, ShowtimeSearchObject, ShowtimeInsertDto, ShowtimeUpdateDto>
     {
         public ShowtimeController(
-            ILogger<BaseController<ShowtimeDto, BaseSearchObject>> logger,
+            ILogger<BaseController<ShowtimeDto, ShowtimeSearchObject>> logger,
             IShowtimeService service)
             : base(logger, service)
         {

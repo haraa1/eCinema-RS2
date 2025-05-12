@@ -16,5 +16,6 @@ namespace eCinema.Services.Interfaces
         Task<UserDto> Authenticate(string username, string password);
         Task SetProfilePictureAsync(int id, IFormFile file);
         Task<(byte[] Data, string ContentType)?> GetProfilePictureAsync(int id);
+        Task<UserDto> UpdateLanguage(int userId, string language);
     }
 }

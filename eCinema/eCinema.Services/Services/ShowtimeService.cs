@@ -14,12 +14,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace eCinema.Services.Services
 {
-    public class ShowtimeService : BaseCRUDService<ShowtimeDto, Showtime, BaseSearchObject, ShowtimeInsertDto, ShowtimeUpdateDto>, IShowtimeService
+    public class ShowtimeService : BaseCRUDService<ShowtimeDto, Showtime, ShowtimeSearchObject, ShowtimeInsertDto, ShowtimeUpdateDto>, IShowtimeService
     {
         public ShowtimeService(eCinemaDbContext context, IMapper mapper) : base(context, mapper)
         {
         }
-        public override IQueryable<Showtime> AddInclude(IQueryable<Showtime> query, BaseSearchObject search = null)
+
+        public override IQueryable<Showtime> AddFilter(IQueryable<Showtime> query, ShowtimeSearchObject? search = null)
+        {
+            var filtered = base.AddFilter(query, search);
+
+            if (!string.IsNullOrWhiteSpace(search?.Language))
+            {
+                filtered = filtered
+                    .OrderByDescending(st => st.Movie.Language == search.Language)
+                    .ThenBy(st => st.StartTime);
+
+            }
+            return filtered;
+        }
+
+        public override IQueryable<Showtime> AddInclude(IQueryable<Showtime> query, ShowtimeSearchObject search = null)
         {
             return query.Include(s => s.Movie).ThenInclude(s => s.MovieGenres)
                         .Include(s=> s.Movie).ThenInclude(s=>s.MovieActors)

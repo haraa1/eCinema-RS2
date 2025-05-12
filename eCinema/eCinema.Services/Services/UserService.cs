@@ -207,5 +207,17 @@ namespace eCinema.Services.Services
 
             return data == null ? null : (data, "image/jpeg");
         }
+
+        public async Task<UserDto> UpdateLanguage(int userId, string language)
+        {
+            var user = await _context.User.FindAsync(userId);
+            if (user == null) return null;
+
+            user.PreferredLanguage = language;
+            _context.Entry(user).Property(u => u.PreferredLanguage).IsModified = true;
+
+            await _context.SaveChangesAsync();
+            return _mapper.Map<UserDto>(user);
+        }
     }
 }

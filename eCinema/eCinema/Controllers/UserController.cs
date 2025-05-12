@@ -79,5 +79,16 @@ namespace eCinema.Controllers
 
             return Ok(user);
         }
+
+        [Authorize]
+        [HttpPatch("me/preferences")]
+        public async Task<ActionResult<UserDto>> UpdatePreferredLanguage([FromBody] PreferredLanguageDto dto)
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(idClaim, out var userId)) return Unauthorized();
+
+            var updated = await _userService.UpdateLanguage(userId, dto.PreferredLanguage);
+            return Ok(updated);
+        }
     }
 }
