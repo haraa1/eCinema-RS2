@@ -1,5 +1,7 @@
-﻿using eCinema.Models.DTOs.Users;
+﻿using EasyNetQ;
+using eCinema.Models.DTOs.Users;
 using eCinema.Models.Entities;
+using eCinema.Models.Messages;
 using eCinema.Models.SearchObjects;
 using eCinema.Services.Interfaces;
 using eCinema.Services.Services;
@@ -14,12 +16,14 @@ namespace eCinema.Controllers
     public class UserController : BaseCRUDController<UserDto, ActorSearch, UserInsertDto, UserUpdateDto>
     {
         private readonly IUserService _userService;
+        private readonly IBus _bus;
         public UserController(
             ILogger<BaseController<UserDto, ActorSearch>> logger,
-            IUserService service)
+            IUserService service, IBus bus)
             : base(logger, service)
         {
             _userService = service;
+            _bus = bus;
         }
         [Authorize(Roles = "Admin")]
         public override Task<UserDto> Insert([FromBody] UserInsertDto insert)
@@ -61,7 +65,9 @@ namespace eCinema.Controllers
             };
 
             var created = await _userService.Insert(insert);
-
+            
+            await _bus.PubSub.PublishAsync(new UserRegisteredMessage(created.Id, created.Email, created.UserName, DateTime.UtcNow));
+           
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 

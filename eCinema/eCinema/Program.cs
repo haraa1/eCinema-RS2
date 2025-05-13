@@ -6,6 +6,7 @@ using eCinema.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using eCinema.Authentication;
+using EasyNetQ;                    
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,10 @@ builder.Services.AddTransient<IBookingConcessionsService, BookingConcessionsServ
 
 builder.Services.AddHttpContextAccessor();
 
+
+var rabbitHost = builder.Configuration["Rabbit:Host"] ?? "localhost";
+builder.Services.AddSingleton<IBus>(_ =>
+    RabbitHutch.CreateBus($"host={rabbitHost}", cfg => cfg.EnableSystemTextJson()));
 
 // Add services to the container.
 builder.Services.AddDbContext<eCinemaDbContext>(options =>
@@ -85,5 +90,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var ctx = scope.ServiceProvider.GetRequiredService<eCinemaDbContext>();
+    ctx.Database.Migrate();
+}
 
 app.Run();

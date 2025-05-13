@@ -1,0 +1,86 @@
+﻿using System.Threading;
+using System.Threading.Tasks;
+using EasyNetQ;
+using eCinema.Models.Messages;
+using MailKit.Net.Smtp;
+using MimeKit;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using eCinema.Subscriber;
+using MailKit.Security;
+
+public sealed class EmailSubscriber : BackgroundService
+{
+    private readonly IBus _bus;
+    private readonly ILogger<EmailSubscriber> _log;
+    private readonly SmtpOptions _smtp;
+    private readonly EmailOptions _email;
+
+    public EmailSubscriber(IBus bus,
+    IOptions<SmtpOptions> smtpOpt,
+    IOptions<EmailOptions> emailOpt,
+    ILogger<EmailSubscriber> log)
+    {
+        _bus = bus;
+        _smtp = smtpOpt.Value;
+        _email = emailOpt.Value;
+        _log = log;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _log.LogInformation("Email worker listening for UserRegistered messages…");
+
+        await _bus.PubSub.SubscribeAsync<UserRegisteredMessage>(
+            "email-svc",
+            SendWelcomeMail,
+            cfg => {  },
+            stoppingToken
+        );
+    }
+
+    private async Task SendWelcomeMail(UserRegisteredMessage msg, CancellationToken ct)
+    {
+        _log.LogInformation("→ sending mail to {Email}", msg.Email);
+
+        var mime = new MimeMessage();
+        mime.From.Add(MailboxAddress.Parse(_email.From));
+        mime.To.Add(MailboxAddress.Parse(msg.Email));
+        mime.Subject = _email.Subject;
+        mime.Body = new TextPart("plain")
+        {
+            Text = $"Zdravo {msg.UserName},\n\nHvala što ste se registrovali na eCinema! Vaš korisnički račun je uspješno kreiran." +
+            $" Uživajte u pretraživanju i rezervaciji svojih omiljenih filmova." +
+            $"\n\nSrdačan pozdrav,\neCinema tim"
+        };
+
+
+        try
+        {
+            using var smtp = new SmtpClient();
+            var option = _smtp.UseStartTls
+                ? SecureSocketOptions.StartTls
+                : SecureSocketOptions.None;
+
+            await smtp.ConnectAsync(_smtp.Host, _smtp.Port, option, ct);
+
+            if (!string.IsNullOrWhiteSpace(_smtp.User))
+                await smtp.AuthenticateAsync(_smtp.User, _smtp.Pass, ct);
+
+            _log.LogInformation("SMTP connected; sending message…");
+            await smtp.SendAsync(mime, ct);
+            await smtp.DisconnectAsync(true, ct);
+
+            _log.LogInformation(" mail sent to {Email}", msg.Email);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Failed to send email to {Email}", msg.Email);
+        }
+    }
+
+
+
+
+}
