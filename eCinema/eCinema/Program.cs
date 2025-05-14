@@ -6,7 +6,9 @@ using eCinema.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using eCinema.Authentication;
-using EasyNetQ;                    
+using EasyNetQ;
+using Stripe;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,7 @@ builder.Services.AddTransient<ITicketService, TicketService>();
 builder.Services.AddTransient<ITicketTypeService, TicketTypeService>();
 builder.Services.AddTransient<IBookingService, BookingService>();
 builder.Services.AddTransient<IBookingConcessionsService, BookingConcessionsService>();
+builder.Services.AddTransient<IPaymentService, PaymentService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -44,6 +47,17 @@ builder.Services.AddAutoMapper(typeof(ShowtimeProfile));
 builder.Services.AddAutoMapper(typeof(TicketTypeProfile));
 builder.Services.AddAutoMapper(typeof(BookingProfile));
 builder.Services.AddAutoMapper(typeof(TicketProfile));
+builder.Services.AddAutoMapper(typeof(PaymentProfile));
+
+builder.Services.Configure<StripeSettings>(
+  builder.Configuration.GetSection("Stripe")
+);
+
+builder.Services.AddSingleton<StripeClient>(sp =>
+  new StripeClient(
+    builder.Configuration.GetValue<string>("Stripe:SecretKey")
+  )
+);
 
 
 builder.Services.AddControllers();

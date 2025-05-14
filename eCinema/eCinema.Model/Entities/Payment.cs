@@ -13,7 +13,7 @@ namespace CinemaApp.Domain.Entities
         public string Currency { get; set; } = "bam";
 
         public string StripePaymentIntentId { get; set; }
-        public string StripeChargeId { get; set; }
+        public string? StripeChargeId { get; set; }
 
         public PaymentStatus Status { get; set; }
 
