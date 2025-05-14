@@ -66,7 +66,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ConcessionScreen()),
+      MaterialPageRoute(builder: (_) => ConcessionSelectionScreen()),
     );
   }
 

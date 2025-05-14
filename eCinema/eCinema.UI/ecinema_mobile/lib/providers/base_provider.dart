@@ -102,6 +102,16 @@ abstract class BaseProvider<T> with ChangeNotifier {
     }
   }
 
+  Future<Response> post(String path, dynamic request) async {
+    final url = '$_baseUrl$_endpoint/$path';
+    final uri = Uri.parse(url);
+
+    final headers = createHeaders();
+    final body = jsonEncode(request);
+
+    return await http!.post(uri, headers: headers, body: body);
+  }
+
   Map<String, String> createHeaders() {
     String? username = Authorization.username;
     String? password = Authorization.password;

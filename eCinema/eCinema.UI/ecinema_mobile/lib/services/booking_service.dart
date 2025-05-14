@@ -20,8 +20,6 @@ Future<void> submitBooking(BookingState state) async {
         state.tickets
             .map(
               (t) => {
-                "id": 0,
-                "bookingId": 0,
                 "seatId": t.seatId,
                 "ticketTypeId": t.ticketTypeId,
                 "price": t.price,

@@ -47,4 +47,8 @@ class BookingProvider extends BaseProvider<Booking> {
     _busy = false;
     notifyListeners();
   }
+
+  Future<Booking?> create(Map<String, dynamic> data) async {
+    return await insert(data);
+  }
 }
