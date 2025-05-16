@@ -1,86 +1,84 @@
-import 'package:ecinema_desktop/models/actor.dart';
-import 'package:ecinema_desktop/providers/actor_provider.dart';
-import 'package:ecinema_desktop/screens/actors_form_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class ActorListScreen extends StatefulWidget {
-  const ActorListScreen({super.key});
+import 'package:ecinema_desktop/models/booking.dart';
+import 'package:ecinema_desktop/providers/booking_provider.dart';
+
+class BookingListScreen extends StatefulWidget {
+  const BookingListScreen({super.key});
 
   @override
-  State<ActorListScreen> createState() => _ActorListScreenState();
+  State<BookingListScreen> createState() => _BookingListScreenState();
 }
 
-class _ActorListScreenState extends State<ActorListScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  final ActorProvider _actorProvider = ActorProvider();
+class _BookingListScreenState extends State<BookingListScreen> {
+  final _bookingProvider = BookingProvider();
+  final _searchIdController = TextEditingController();
 
-  List<Actor> _actors = [];
+  List<Booking> _bookings = [];
+  int _currentPage = 1;
+  final int _pageSize = 15;
+  int _totalCount = 0;
+
   bool _isLoading = true;
   String? _error;
-  int _currentPage = 1;
-  int _pageSize = 10;
-  int _totalCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadActors();
+    _loadBookings();
   }
 
-  Future<void> _loadActors({bool showLoading = true}) async {
+  Future<void> _loadBookings({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
         _isLoading = true;
         _error = null;
       });
     }
+
     try {
-      final result = await _actorProvider.get(
-        filter: {
-          "Name": _searchController.text.trim(),
-          "Page": _currentPage - 1,
-          "PageSize": _pageSize,
-        },
-      );
+      Map<String, dynamic> filter = {
+        "Page": _currentPage - 1,
+        "PageSize": _pageSize,
+      };
+
+      if (_searchIdController.text.trim().isNotEmpty) {
+        final bookingId = int.tryParse(_searchIdController.text.trim());
+        if (bookingId != null) {
+          filter["Id"] = bookingId;
+        }
+      }
+
+      final result = await _bookingProvider.get(filter: filter);
       if (mounted) {
         setState(() {
-          _actors = result.result;
+          _bookings = result.result;
           _totalCount = result.count ?? 0;
-          _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error loading actors: $e");
+      print("Error loading bookings: $e");
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = "Greška pri učitavanju glumaca: ${e.toString()}";
-        });
+        _error = "Greška pri učitavanju rezervacija: ${e.toString()}";
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
   int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
 
-  void _navigateToActorForm({Actor? actor}) async {
-    final bool? shouldRefresh = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => ActorFormScreen(actor: actor)),
-    );
-
-    if (shouldRefresh == true && mounted) {
-      _currentPage = 1;
-      _loadActors();
-    }
-  }
-
-  Future<void> _deleteActor(int actorId) async {
+  Future<void> _deleteBooking(int bookingId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text("Potvrda brisanja"),
+            title: const Text("Potvrdite brisanje"),
             content: const Text(
-              "Da li ste sigurni da želite obrisati ovog glumca? Ova akcija se ne može poništiti.",
+              "Da li ste sigurni da želite obrisati ovu rezervaciju? Ova akcija se ne može poništiti.",
             ),
             actions: [
               TextButton(
@@ -100,26 +98,24 @@ class _ActorListScreenState extends State<ActorListScreen> {
 
     if (confirm == true && mounted) {
       try {
-        setState(() => _isLoading = true);
-        await _actorProvider.delete(actorId);
+        await _bookingProvider.delete(bookingId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Glumac uspješno obrisan."),
+              content: Text("Rezervacija uspješno obrisana."),
               backgroundColor: Colors.green,
             ),
           );
-          if (_actors.length == 1 && _currentPage > 1) {
+          if (_bookings.length == 1 && _currentPage > 1) {
             _currentPage--;
           }
-          _loadActors(showLoading: false);
+          _loadBookings(showLoading: false);
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Greška pri brisanju glumca: ${e.toString()}"),
+              content: Text("Greška pri brisanju rezervacije: ${e.toString()}"),
               backgroundColor: Colors.red,
             ),
           );
@@ -140,10 +136,10 @@ class _ActorListScreenState extends State<ActorListScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _searchController,
+                    controller: _searchIdController,
                     decoration: InputDecoration(
-                      hintText: "Pretraži po imenu ili prezimenu...",
-                      prefixIcon: const Icon(Icons.search),
+                      hintText: "Pretraži po ID rezervacije...",
+                      prefixIcon: const Icon(Icons.vpn_key),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide.none,
@@ -155,9 +151,10 @@ class _ActorListScreenState extends State<ActorListScreen> {
                         horizontal: 16,
                       ),
                     ),
+                    keyboardType: TextInputType.number,
                     onSubmitted: (_) {
                       _currentPage = 1;
-                      _loadActors();
+                      _loadBookings();
                     },
                   ),
                 ),
@@ -165,7 +162,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
                     _currentPage = 1;
-                    _loadActors();
+                    _loadBookings();
                   },
                   icon: const Icon(Icons.search),
                   label: const Text("Pretraži"),
@@ -176,25 +173,10 @@ class _ActorListScreenState extends State<ActorListScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _navigateToActorForm();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text("Dodaj glumca"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 20),
+
             if (_isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_error != null)
@@ -206,11 +188,11 @@ class _ActorListScreenState extends State<ActorListScreen> {
                   ),
                 ),
               )
-            else if (_actors.isEmpty)
+            else if (_bookings.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text(
-                    "Nema pronađenih glumaca.",
+                    "Nema pronađenih rezervacija.",
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -231,7 +213,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   minWidth: constraints.maxWidth,
                                 ),
                                 child: DataTable(
-                                  columnSpacing: 20,
+                                  columnSpacing: 15,
                                   headingRowColor:
                                       MaterialStateColor.resolveWith(
                                         (states) => Theme.of(
@@ -241,7 +223,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   columns: const [
                                     DataColumn(
                                       label: Text(
-                                        "ID",
+                                        "KORISNIK (ID Rez.)",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -249,7 +231,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "IME",
+                                        "PROJEKCIJA (ID)",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -257,7 +239,31 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "PREZIME",
+                                        "VRIJEME REZ.",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "POPUST KOD",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "BR. KARATA",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "BR. KONCESIJA",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -272,7 +278,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                       ),
                                     ),
                                   ],
-                                  rows: _buildActorRows(),
+                                  rows: _bookings.map(_buildRow).toList(),
                                 ),
                               ),
                             ),
@@ -292,7 +298,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage = 1);
-                                        _loadActors();
+                                        _loadBookings();
                                       }
                                       : null,
                             ),
@@ -302,7 +308,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage--);
-                                        _loadActors();
+                                        _loadBookings();
                                       }
                                       : null,
                             ),
@@ -313,7 +319,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage < _totalPages
                                       ? () {
                                         setState(() => _currentPage++);
-                                        _loadActors();
+                                        _loadBookings();
                                       }
                                       : null,
                             ),
@@ -325,7 +331,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                         setState(
                                           () => _currentPage = _totalPages,
                                         );
-                                        _loadActors();
+                                        _loadBookings();
                                       }
                                       : null,
                             ),
@@ -341,34 +347,35 @@ class _ActorListScreenState extends State<ActorListScreen> {
     );
   }
 
-  List<DataRow> _buildActorRows() {
-    return _actors.map((actor) {
-      return DataRow(
-        cells: [
-          DataCell(Text(actor.id?.toString() ?? 'N/A')),
-          DataCell(Text(actor.firstName ?? "Nepoznato")),
-          DataCell(Text(actor.lastName ?? "Nepoznato")),
-          DataCell(
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                  tooltip: "Uredi glumca",
-                  onPressed: () {
-                    _navigateToActorForm(actor: actor);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  tooltip: "Obriši glumca",
-                  onPressed: () => _deleteActor(actor.id!),
-                ),
-              ],
-            ),
+  DataRow _buildRow(Booking booking) {
+    final bookingTimeFormatted = DateFormat(
+      'dd.MM.yyyy HH:mm',
+    ).format(booking.bookingTime);
+    final ticketsCount = booking.tickets.length;
+    final concessionsCount = booking.bookingConcessions.length;
+
+    return DataRow(
+      cells: [
+        DataCell(Text(booking.id.toString())),
+        DataCell(Text(booking.showtimeId.toString())),
+        DataCell(Text(bookingTimeFormatted)),
+        DataCell(
+          Text(
+            booking.discountCode?.isNotEmpty == true
+                ? booking.discountCode!
+                : "-",
           ),
-        ],
-      );
-    }).toList();
+        ),
+        DataCell(Text(ticketsCount.toString())),
+        DataCell(Text(concessionsCount.toString())),
+        DataCell(
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.redAccent),
+            tooltip: "Otkaži/Obriši rezervaciju",
+            onPressed: () => _deleteBooking(booking.id),
+          ),
+        ),
+      ],
+    );
   }
 }

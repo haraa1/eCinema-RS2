@@ -1,33 +1,35 @@
-import 'package:ecinema_desktop/models/actor.dart';
-import 'package:ecinema_desktop/providers/actor_provider.dart';
-import 'package:ecinema_desktop/screens/actors_form_screen.dart';
+import 'package:ecinema_desktop/screens/genres_form_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:ecinema_desktop/models/genre.dart';
+import 'package:ecinema_desktop/providers/genre_provider.dart';
 
-class ActorListScreen extends StatefulWidget {
-  const ActorListScreen({super.key});
+class GenreListScreen extends StatefulWidget {
+  const GenreListScreen({super.key});
 
   @override
-  State<ActorListScreen> createState() => _ActorListScreenState();
+  _GenreListScreenState createState() => _GenreListScreenState();
 }
 
-class _ActorListScreenState extends State<ActorListScreen> {
+class _GenreListScreenState extends State<GenreListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final ActorProvider _actorProvider = ActorProvider();
+  final GenreProvider _genreProvider = GenreProvider();
 
-  List<Actor> _actors = [];
+  List<Genre> _genres = [];
   bool _isLoading = true;
   String? _error;
   int _currentPage = 1;
-  int _pageSize = 10;
+  final int _pageSize = 10;
   int _totalCount = 0;
+
+  int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
 
   @override
   void initState() {
     super.initState();
-    _loadActors();
+    _loadGenres();
   }
 
-  Future<void> _loadActors({bool showLoading = true}) async {
+  Future<void> _loadGenres({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
         _isLoading = true;
@@ -35,7 +37,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
       });
     }
     try {
-      final result = await _actorProvider.get(
+      final result = await _genreProvider.get(
         filter: {
           "Name": _searchController.text.trim(),
           "Page": _currentPage - 1,
@@ -44,43 +46,42 @@ class _ActorListScreenState extends State<ActorListScreen> {
       );
       if (mounted) {
         setState(() {
-          _actors = result.result;
+          _genres = result.result;
           _totalCount = result.count ?? 0;
-          _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error loading actors: $e");
+      debugPrint("Error loading genres: $e");
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _error = "Greška pri učitavanju glumaca: ${e.toString()}";
+          _error = "Greška pri učitavanju žanrova: ${e.toString()}";
         });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
-
-  void _navigateToActorForm({Actor? actor}) async {
+  void _navigateToForm({Genre? genre}) async {
     final bool? shouldRefresh = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => ActorFormScreen(actor: actor)),
+      MaterialPageRoute(builder: (_) => GenreFormScreen(genre: genre)),
     );
 
     if (shouldRefresh == true && mounted) {
-      _currentPage = 1;
-      _loadActors();
+      _loadGenres();
     }
   }
 
-  Future<void> _deleteActor(int actorId) async {
+  Future<void> _deleteGenre(int genreId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (ctx) => AlertDialog(
             title: const Text("Potvrda brisanja"),
             content: const Text(
-              "Da li ste sigurni da želite obrisati ovog glumca? Ova akcija se ne može poništiti.",
+              "Da li ste sigurni da želite obrisati ovaj žanr? Može biti povezan s filmovima.",
             ),
             actions: [
               TextButton(
@@ -100,26 +101,24 @@ class _ActorListScreenState extends State<ActorListScreen> {
 
     if (confirm == true && mounted) {
       try {
-        setState(() => _isLoading = true);
-        await _actorProvider.delete(actorId);
+        await _genreProvider.delete(genreId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Glumac uspješno obrisan."),
+              content: Text("Žanr uspješno obrisan."),
               backgroundColor: Colors.green,
             ),
           );
-          if (_actors.length == 1 && _currentPage > 1) {
+          if (_genres.length == 1 && _currentPage > 1) {
             _currentPage--;
           }
-          _loadActors(showLoading: false);
+          _loadGenres(showLoading: false);
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Greška pri brisanju glumca: ${e.toString()}"),
+              content: Text("Greška pri brisanju žanra: ${e.toString()}"),
               backgroundColor: Colors.red,
             ),
           );
@@ -142,7 +141,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: "Pretraži po imenu ili prezimenu...",
+                      hintText: "Pretraži po nazivu žanra...",
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -157,32 +156,16 @@ class _ActorListScreenState extends State<ActorListScreen> {
                     ),
                     onSubmitted: (_) {
                       _currentPage = 1;
-                      _loadActors();
+                      _loadGenres();
                     },
                   ),
                 ),
+
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    _currentPage = 1;
-                    _loadActors();
-                  },
-                  icon: const Icon(Icons.search),
-                  label: const Text("Pretraži"),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _navigateToActorForm();
-                  },
+                  onPressed: () => _navigateToForm(),
                   icon: const Icon(Icons.add),
-                  label: const Text("Dodaj glumca"),
+                  label: const Text("Dodaj žanr"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
@@ -206,11 +189,11 @@ class _ActorListScreenState extends State<ActorListScreen> {
                   ),
                 ),
               )
-            else if (_actors.isEmpty)
+            else if (_genres.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text(
-                    "Nema pronađenih glumaca.",
+                    "Nema pronađenih žanrova.",
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -249,15 +232,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "IME",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Text(
-                                        "PREZIME",
+                                        "NAZIV ŽANRA",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -272,7 +247,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                       ),
                                     ),
                                   ],
-                                  rows: _buildActorRows(),
+                                  rows: _buildGenreRows(),
                                 ),
                               ),
                             ),
@@ -292,7 +267,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage = 1);
-                                        _loadActors();
+                                        _loadGenres();
                                       }
                                       : null,
                             ),
@@ -302,7 +277,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage--);
-                                        _loadActors();
+                                        _loadGenres();
                                       }
                                       : null,
                             ),
@@ -313,7 +288,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage < _totalPages
                                       ? () {
                                         setState(() => _currentPage++);
-                                        _loadActors();
+                                        _loadGenres();
                                       }
                                       : null,
                             ),
@@ -325,7 +300,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                         setState(
                                           () => _currentPage = _totalPages,
                                         );
-                                        _loadActors();
+                                        _loadGenres();
                                       }
                                       : null,
                             ),
@@ -341,28 +316,25 @@ class _ActorListScreenState extends State<ActorListScreen> {
     );
   }
 
-  List<DataRow> _buildActorRows() {
-    return _actors.map((actor) {
+  List<DataRow> _buildGenreRows() {
+    return _genres.map((genre) {
       return DataRow(
         cells: [
-          DataCell(Text(actor.id?.toString() ?? 'N/A')),
-          DataCell(Text(actor.firstName ?? "Nepoznato")),
-          DataCell(Text(actor.lastName ?? "Nepoznato")),
+          DataCell(Text(genre.id?.toString() ?? 'N/A')),
+          DataCell(Text(genre.name ?? "Nepoznat naziv")),
           DataCell(
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                  tooltip: "Uredi glumca",
-                  onPressed: () {
-                    _navigateToActorForm(actor: actor);
-                  },
+                  tooltip: "Uredi žanr",
+                  onPressed: () => _navigateToForm(genre: genre),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  tooltip: "Obriši glumca",
-                  onPressed: () => _deleteActor(actor.id!),
+                  tooltip: "Obriši žanr",
+                  onPressed: () => _deleteGenre(genre.id!),
                 ),
               ],
             ),

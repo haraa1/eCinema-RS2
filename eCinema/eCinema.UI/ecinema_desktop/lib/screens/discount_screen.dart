@@ -1,33 +1,36 @@
-import 'package:ecinema_desktop/models/actor.dart';
-import 'package:ecinema_desktop/providers/actor_provider.dart';
-import 'package:ecinema_desktop/screens/actors_form_screen.dart';
+import 'package:ecinema_desktop/screens/discount_form_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:ecinema_desktop/models/discount.dart';
+import 'package:ecinema_desktop/providers/discount_provider.dart';
 
-class ActorListScreen extends StatefulWidget {
-  const ActorListScreen({super.key});
+class DiscountListScreen extends StatefulWidget {
+  const DiscountListScreen({super.key});
 
   @override
-  State<ActorListScreen> createState() => _ActorListScreenState();
+  State<DiscountListScreen> createState() => _DiscountListScreenState();
 }
 
-class _ActorListScreenState extends State<ActorListScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  final ActorProvider _actorProvider = ActorProvider();
+class _DiscountListScreenState extends State<DiscountListScreen> {
+  final _discountProvider = DiscountProvider();
+  final _searchCodeController = TextEditingController();
 
-  List<Actor> _actors = [];
+  List<Discount> _discounts = [];
+  int _currentPage = 1;
+  final int _pageSize = 10;
+  int _totalCount = 0;
+
   bool _isLoading = true;
   String? _error;
-  int _currentPage = 1;
-  int _pageSize = 10;
-  int _totalCount = 0;
+  bool? _filterIsActive;
 
   @override
   void initState() {
     super.initState();
-    _loadActors();
+    _loadDiscounts();
   }
 
-  Future<void> _loadActors({bool showLoading = true}) async {
+  Future<void> _loadDiscounts({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
         _isLoading = true;
@@ -35,52 +38,53 @@ class _ActorListScreenState extends State<ActorListScreen> {
       });
     }
     try {
-      final result = await _actorProvider.get(
-        filter: {
-          "Name": _searchController.text.trim(),
-          "Page": _currentPage - 1,
-          "PageSize": _pageSize,
-        },
-      );
+      Map<String, dynamic> filter = {
+        "Page": _currentPage - 1,
+        "PageSize": _pageSize,
+        "Name": _searchCodeController.text.trim(),
+      };
+      if (_filterIsActive != null) {
+        filter["IsActive"] = _filterIsActive;
+      }
+
+      final result = await _discountProvider.get(filter: filter);
       if (mounted) {
         setState(() {
-          _actors = result.result;
+          _discounts = result.result;
           _totalCount = result.count ?? 0;
-          _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error loading actors: $e");
+      print("Error loading discounts: $e");
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = "Greška pri učitavanju glumaca: ${e.toString()}";
-        });
+        _error = "Greška pri učitavanju popusta: ${e.toString()}";
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
   int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
 
-  void _navigateToActorForm({Actor? actor}) async {
+  void _navigateToForm({Discount? discount}) async {
     final bool? shouldRefresh = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => ActorFormScreen(actor: actor)),
+      MaterialPageRoute(builder: (_) => DiscountFormScreen(discount: discount)),
     );
-
     if (shouldRefresh == true && mounted) {
-      _currentPage = 1;
-      _loadActors();
+      _loadDiscounts();
     }
   }
 
-  Future<void> _deleteActor(int actorId) async {
+  Future<void> _deleteDiscount(int discountId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (ctx) => AlertDialog(
             title: const Text("Potvrda brisanja"),
             content: const Text(
-              "Da li ste sigurni da želite obrisati ovog glumca? Ova akcija se ne može poništiti.",
+              "Da li ste sigurni da želite obrisati ovaj popust?",
             ),
             actions: [
               TextButton(
@@ -100,26 +104,24 @@ class _ActorListScreenState extends State<ActorListScreen> {
 
     if (confirm == true && mounted) {
       try {
-        setState(() => _isLoading = true);
-        await _actorProvider.delete(actorId);
+        await _discountProvider.delete(discountId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Glumac uspješno obrisan."),
+              content: Text("Popust uspješno obrisan."),
               backgroundColor: Colors.green,
             ),
           );
-          if (_actors.length == 1 && _currentPage > 1) {
+          if (_discounts.length == 1 && _currentPage > 1) {
             _currentPage--;
           }
-          _loadActors(showLoading: false);
+          _loadDiscounts(showLoading: false);
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Greška pri brisanju glumca: ${e.toString()}"),
+              content: Text("Greška pri brisanju popusta: ${e.toString()}"),
               backgroundColor: Colors.red,
             ),
           );
@@ -140,10 +142,10 @@ class _ActorListScreenState extends State<ActorListScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _searchController,
+                    controller: _searchCodeController,
                     decoration: InputDecoration(
-                      hintText: "Pretraži po imenu ili prezimenu...",
-                      prefixIcon: const Icon(Icons.search),
+                      hintText: "Pretraži po kodu popusta...",
+                      prefixIcon: const Icon(Icons.sell_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide.none,
@@ -157,15 +159,32 @@ class _ActorListScreenState extends State<ActorListScreen> {
                     ),
                     onSubmitted: (_) {
                       _currentPage = 1;
-                      _loadActors();
+                      _loadDiscounts();
                     },
                   ),
+                ),
+                const SizedBox(width: 10),
+                DropdownButton<bool?>(
+                  value: _filterIsActive,
+                  hint: const Text("Status aktivnosti"),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text("Svi statusi")),
+                    DropdownMenuItem(value: true, child: Text("Aktivni")),
+                    DropdownMenuItem(value: false, child: Text("Neaktivni")),
+                  ],
+                  onChanged: (bool? newValue) {
+                    setState(() {
+                      _filterIsActive = newValue;
+                      _currentPage = 1;
+                    });
+                    _loadDiscounts();
+                  },
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: () {
                     _currentPage = 1;
-                    _loadActors();
+                    _loadDiscounts();
                   },
                   icon: const Icon(Icons.search),
                   label: const Text("Pretraži"),
@@ -178,11 +197,9 @@ class _ActorListScreenState extends State<ActorListScreen> {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    _navigateToActorForm();
-                  },
+                  onPressed: () => _navigateToForm(),
                   icon: const Icon(Icons.add),
-                  label: const Text("Dodaj glumca"),
+                  label: const Text("Dodaj popust"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
@@ -195,6 +212,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
               ],
             ),
             const SizedBox(height: 20),
+
             if (_isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_error != null)
@@ -206,11 +224,11 @@ class _ActorListScreenState extends State<ActorListScreen> {
                   ),
                 ),
               )
-            else if (_actors.isEmpty)
+            else if (_discounts.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text(
-                    "Nema pronađenih glumaca.",
+                    "Nema pronađenih popusta za odabrane kriterije.",
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -231,7 +249,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   minWidth: constraints.maxWidth,
                                 ),
                                 child: DataTable(
-                                  columnSpacing: 20,
+                                  columnSpacing: 15,
                                   headingRowColor:
                                       MaterialStateColor.resolveWith(
                                         (states) => Theme.of(
@@ -249,7 +267,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "IME",
+                                        "KOD",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -257,7 +275,31 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "PREZIME",
+                                        "PROCENT (%)",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "VAŽI OD",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "VAŽI DO",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "AKTIVAN",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -272,7 +314,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                       ),
                                     ),
                                   ],
-                                  rows: _buildActorRows(),
+                                  rows: _discounts.map(_buildRow).toList(),
                                 ),
                               ),
                             ),
@@ -292,7 +334,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage = 1);
-                                        _loadActors();
+                                        _loadDiscounts();
                                       }
                                       : null,
                             ),
@@ -302,7 +344,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage--);
-                                        _loadActors();
+                                        _loadDiscounts();
                                       }
                                       : null,
                             ),
@@ -313,7 +355,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage < _totalPages
                                       ? () {
                                         setState(() => _currentPage++);
-                                        _loadActors();
+                                        _loadDiscounts();
                                       }
                                       : null,
                             ),
@@ -325,7 +367,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                         setState(
                                           () => _currentPage = _totalPages,
                                         );
-                                        _loadActors();
+                                        _loadDiscounts();
                                       }
                                       : null,
                             ),
@@ -341,34 +383,40 @@ class _ActorListScreenState extends State<ActorListScreen> {
     );
   }
 
-  List<DataRow> _buildActorRows() {
-    return _actors.map((actor) {
-      return DataRow(
-        cells: [
-          DataCell(Text(actor.id?.toString() ?? 'N/A')),
-          DataCell(Text(actor.firstName ?? "Nepoznato")),
-          DataCell(Text(actor.lastName ?? "Nepoznato")),
-          DataCell(
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                  tooltip: "Uredi glumca",
-                  onPressed: () {
-                    _navigateToActorForm(actor: actor);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  tooltip: "Obriši glumca",
-                  onPressed: () => _deleteActor(actor.id!),
-                ),
-              ],
-            ),
+  DataRow _buildRow(Discount discount) {
+    final DateFormat dateFormatter = DateFormat('dd.MM.yyyy');
+    return DataRow(
+      cells: [
+        DataCell(Text(discount.id.toString())),
+        DataCell(Text(discount.code)),
+        DataCell(Text(discount.discountPercentage.toStringAsFixed(0))),
+        DataCell(Text(dateFormatter.format(discount.validFrom))),
+        DataCell(Text(dateFormatter.format(discount.validTo))),
+        DataCell(
+          Icon(
+            discount.isActive ? Icons.check_circle : Icons.cancel,
+            color: discount.isActive ? Colors.green : Colors.red,
+            semanticLabel: discount.isActive ? "Aktivan" : "Neaktivan",
           ),
-        ],
-      );
-    }).toList();
+        ),
+        DataCell(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
+                tooltip: "Uredi popust",
+                onPressed: () => _navigateToForm(discount: discount),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                tooltip: "Obriši popust",
+                onPressed: () => _deleteDiscount(discount.id),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

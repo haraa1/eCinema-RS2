@@ -1,9 +1,16 @@
 import 'package:ecinema_desktop/screens/actors_screen.dart';
+import 'package:ecinema_desktop/screens/bookings_screen.dart';
 import 'package:ecinema_desktop/screens/cinema_halls.dart';
 import 'package:ecinema_desktop/screens/cinemas_screen.dart';
 import 'package:ecinema_desktop/screens/concessions_screen.dart';
+import 'package:ecinema_desktop/screens/discount_screen.dart';
+import 'package:ecinema_desktop/screens/genre_screen.dart';
 import 'package:ecinema_desktop/screens/movies_screen.dart';
+import 'package:ecinema_desktop/screens/payments_screen.dart';
+import 'package:ecinema_desktop/screens/reports_screen.dart';
+import 'package:ecinema_desktop/screens/seat_type_screen.dart';
 import 'package:ecinema_desktop/screens/showtimes_screen.dart';
+import 'package:ecinema_desktop/screens/ticket_type_screen.dart';
 import 'package:ecinema_desktop/screens/user_list_screen.dart';
 import 'package:ecinema_desktop/widgets/admin_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +58,32 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       case 6:
         currentTitle = "Korisnici";
         currentScreen = const UserListScreen();
+      case 7:
+        currentTitle = "Rezervacije";
+        currentScreen = const BookingListScreen();
+      case 8:
+        currentTitle = "Žanrovi";
+        currentScreen = const GenreListScreen();
+        break;
+      case 9:
+        currentTitle = "Uplate";
+        currentScreen = const PaymentListScreen();
+        break;
+      case 10:
+        currentTitle = "Tipovi sjedišta";
+        currentScreen = const SeatTypeListScreen();
+      case 11:
+        currentTitle = "Tipovi karata";
+        currentScreen = const TicketTypeListScreen();
+        break;
+      case 12:
+        currentTitle = "Popusti";
+        currentScreen = const DiscountListScreen();
+        break;
+      case 13:
+        currentTitle = "Izvještaji";
+        currentScreen = TicketReportPage();
+        break;
       default:
         currentTitle = "Početna";
         currentScreen = const Center(child: Text("Nepoznata sekcija"));

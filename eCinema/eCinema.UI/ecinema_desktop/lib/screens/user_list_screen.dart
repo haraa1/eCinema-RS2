@@ -1,9 +1,7 @@
+import 'package:ecinema_desktop/screens/user_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:ecinema_desktop/models/user.dart';
-import 'package:ecinema_desktop/models/role.dart';
 import 'package:ecinema_desktop/providers/user_provider.dart';
-import 'package:ecinema_desktop/providers/role_provider.dart';
-import 'package:ecinema_desktop/screens/user_form_screen.dart';
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({super.key});
@@ -15,11 +13,11 @@ class UserListScreen extends StatefulWidget {
 class _UserListScreenState extends State<UserListScreen> {
   final _searchController = TextEditingController();
   final _userProvider = UserProvider();
-  final _roleProvider = RoleProvider();
 
   List<User> _users = [];
-  Map<int, String> _roleMap = {};
+
   bool _isLoading = true;
+  String? _error;
   int _currentPage = 1;
   int _pageSize = 10;
   int _totalCount = 0;
@@ -27,44 +25,116 @@ class _UserListScreenState extends State<UserListScreen> {
   @override
   void initState() {
     super.initState();
-    _loadRoles().then((_) => _loadUsers());
+
+    _loadUsers();
   }
 
-  Future<void> _loadRoles() async {
-    final result = await _roleProvider.get();
-    setState(() {
-      _roleMap = {for (var r in result.result) r.id!: r.name!};
-    });
-  }
-
-  Future<void> _loadUsers() async {
+  Future<void> _loadUsers({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
     try {
-      setState(() => _isLoading = true);
       final result = await _userProvider.get(
         filter: {
-          "Name": _searchController.text,
+          "Name": _searchController.text.trim(),
           "Page": _currentPage - 1,
           "PageSize": _pageSize,
         },
       );
-      setState(() {
-        _users = result.result;
-        _totalCount = result.count ?? 0;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _users = result.result;
+          _totalCount = result.count ?? 0;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print("Error loading users: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = "Greška pri učitavanju korisnika: ${e.toString()}";
+        });
+      }
     }
   }
 
-  int get _totalPages => (_totalCount / _pageSize).ceil();
+  int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
+
+  void _navigateToForm({User? user}) async {
+    final bool? shouldRefresh = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => UserFormScreen(user: user)));
+    if (shouldRefresh == true && mounted) {
+      _loadUsers();
+    }
+  }
+
+  Future<void> _deleteUser(int userId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text("Potvrda brisanja"),
+            content: const Text(
+              "Da li ste sigurni da želite obrisati ovog korisnika? Ova akcija se ne može poništiti.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text("Otkaži"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Obriši",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true && mounted) {
+      try {
+        setState(() => _isLoading = true);
+        await _userProvider.delete(userId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Korisnik uspješno obrisan."),
+              backgroundColor: Colors.green,
+            ),
+          );
+          if (_users.length == 1 && _currentPage > 1) {
+            _currentPage--;
+          }
+          _loadUsers(showLoading: false);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Greška pri brisanju korisnika: ${e.toString()}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -72,10 +142,17 @@ class _UserListScreenState extends State<UserListScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: "Traži korisnika...",
+                      hintText: "Pretraži po korisničkom imenu...",
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 16,
                       ),
                     ),
                     onSubmitted: (_) {
@@ -84,7 +161,7 @@ class _UserListScreenState extends State<UserListScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: () {
                     _currentPage = 1;
@@ -92,23 +169,51 @@ class _UserListScreenState extends State<UserListScreen> {
                   },
                   icon: const Icon(Icons.search),
                   label: const Text("Pretraži"),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const UserFormScreen()),
-                    );
-                    _loadUsers();
-                  },
+                  onPressed: () => _navigateToForm(),
                   icon: const Icon(Icons.add),
                   label: const Text("Dodaj korisnika"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+
             if (_isLoading)
-              const CircularProgressIndicator()
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (_error != null)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                  ),
+                ),
+              )
+            else if (_users.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    "Nema pronađenih korisnika.",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              )
             else
               Expanded(
                 child: Column(
@@ -117,52 +222,131 @@ class _UserListScreenState extends State<UserListScreen> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: constraints.maxWidth,
-                              ),
-                              child: DataTable(
-                                columns: const [
-                                  DataColumn(label: Text("USERNAME")),
-                                  DataColumn(label: Text("EMAIL")),
-                                  DataColumn(label: Text("TELEFON")),
-                                  DataColumn(label: Text("ULOGE")),
-                                  DataColumn(label: Text("AKCIJE")),
-                                ],
-                                rows: _users.map(_buildRow).toList(),
+                            scrollDirection: Axis.vertical,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                ),
+                                child: DataTable(
+                                  columnSpacing: 15,
+                                  headingRowColor:
+                                      MaterialStateColor.resolveWith(
+                                        (states) => Theme.of(
+                                          context,
+                                        ).primaryColorLight.withOpacity(0.3),
+                                      ),
+                                  columns: const [
+                                    DataColumn(
+                                      label: Text(
+                                        "ID",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "KOR. IME",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "EMAIL",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "TELEFON",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "ULOGE",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "AKCIJE",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  rows: _users.map(_buildRow).toList(),
+                                ),
                               ),
                             ),
                           );
                         },
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed:
-                              _currentPage > 1
-                                  ? () {
-                                    setState(() => _currentPage--);
-                                    _loadUsers();
-                                  }
-                                  : null,
+                    if (_totalPages > 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.first_page),
+                              onPressed:
+                                  _currentPage > 1
+                                      ? () {
+                                        setState(() => _currentPage = 1);
+                                        _loadUsers();
+                                      }
+                                      : null,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.chevron_left),
+                              onPressed:
+                                  _currentPage > 1
+                                      ? () {
+                                        setState(() => _currentPage--);
+                                        _loadUsers();
+                                      }
+                                      : null,
+                            ),
+                            Text("Stranica $_currentPage od $_totalPages"),
+                            IconButton(
+                              icon: const Icon(Icons.chevron_right),
+                              onPressed:
+                                  _currentPage < _totalPages
+                                      ? () {
+                                        setState(() => _currentPage++);
+                                        _loadUsers();
+                                      }
+                                      : null,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.last_page),
+                              onPressed:
+                                  _currentPage < _totalPages
+                                      ? () {
+                                        setState(
+                                          () => _currentPage = _totalPages,
+                                        );
+                                        _loadUsers();
+                                      }
+                                      : null,
+                            ),
+                          ],
                         ),
-                        Text("$_currentPage / $_totalPages"),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward),
-                          onPressed:
-                              _currentPage < _totalPages
-                                  ? () {
-                                    setState(() => _currentPage++);
-                                    _loadUsers();
-                                  }
-                                  : null,
-                        ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
               ),
@@ -172,58 +356,48 @@ class _UserListScreenState extends State<UserListScreen> {
     );
   }
 
-  DataRow _buildRow(User u) {
-    String roleNames = u.roles?.join(", ") ?? "";
+  DataRow _buildRow(User user) {
+    String roleNames =
+        user.roles?.join(", ") ?? user.roles?.join(", ") ?? "Nema uloga";
+    if (roleNames.isEmpty) roleNames = "Nema uloga";
 
     return DataRow(
       cells: [
-        DataCell(Text(u.userName ?? "")),
-        DataCell(Text(u.email ?? "")),
-        DataCell(Text(u.phoneNumber ?? "")),
-        DataCell(Text(roleNames)),
+        DataCell(Text(user.id?.toString() ?? 'N/A')),
+        DataCell(Text(user.userName ?? "N/A")),
+        DataCell(
+          Tooltip(
+            message: user.email ?? "",
+            child: SizedBox(
+              width: 150,
+              child: Text(user.email ?? "N/A", overflow: TextOverflow.ellipsis),
+            ),
+          ),
+        ),
+        DataCell(Text(user.phoneNumber ?? "N/A")),
+        DataCell(
+          Tooltip(
+            message: roleNames,
+            child: SizedBox(
+              width: 120,
+              child: Text(roleNames, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+        ),
         DataCell(
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => UserFormScreen(user: u)),
-                  );
-                  _loadUsers();
-                },
+                icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
+                tooltip: "Uredi korisnika",
+                onPressed: () => _navigateToForm(user: user),
               ),
+
               IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder:
-                        (ctx) => AlertDialog(
-                          title: const Text("Potvrda brisanja"),
-                          content: const Text(
-                            "Da li ste sigurni da želite obrisati ovog korisnika?",
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text("Otkaži"),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text(
-                                "Obriši",
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                  );
-                  if (confirm == true) {
-                    await _userProvider.delete(u.id!);
-                    _loadUsers();
-                  }
-                },
+                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                tooltip: "Obriši korisnika",
+                onPressed: () => _deleteUser(user.id!),
               ),
             ],
           ),

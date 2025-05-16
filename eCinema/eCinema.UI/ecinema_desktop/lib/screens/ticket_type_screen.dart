@@ -1,33 +1,35 @@
-import 'package:ecinema_desktop/models/actor.dart';
-import 'package:ecinema_desktop/providers/actor_provider.dart';
-import 'package:ecinema_desktop/screens/actors_form_screen.dart';
+import 'package:ecinema_desktop/screens/ticket_type_form_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:ecinema_desktop/models/ticket_type.dart';
+import 'package:ecinema_desktop/providers/ticket_type_provider.dart';
 
-class ActorListScreen extends StatefulWidget {
-  const ActorListScreen({super.key});
+class TicketTypeListScreen extends StatefulWidget {
+  const TicketTypeListScreen({Key? key}) : super(key: key);
 
   @override
-  State<ActorListScreen> createState() => _ActorListScreenState();
+  State<TicketTypeListScreen> createState() => _TicketTypeListScreenState();
 }
 
-class _ActorListScreenState extends State<ActorListScreen> {
+class _TicketTypeListScreenState extends State<TicketTypeListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final ActorProvider _actorProvider = ActorProvider();
+  final TicketTypeProvider _ticketTypeProvider = TicketTypeProvider();
 
-  List<Actor> _actors = [];
+  List<TicketType> _ticketTypes = [];
   bool _isLoading = true;
   String? _error;
   int _currentPage = 1;
-  int _pageSize = 10;
+  final int _pageSize = 10;
   int _totalCount = 0;
+
+  int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
 
   @override
   void initState() {
     super.initState();
-    _loadActors();
+    _loadTicketTypes();
   }
 
-  Future<void> _loadActors({bool showLoading = true}) async {
+  Future<void> _loadTicketTypes({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
         _isLoading = true;
@@ -35,7 +37,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
       });
     }
     try {
-      final result = await _actorProvider.get(
+      final result = await _ticketTypeProvider.get(
         filter: {
           "Name": _searchController.text.trim(),
           "Page": _currentPage - 1,
@@ -44,53 +46,53 @@ class _ActorListScreenState extends State<ActorListScreen> {
       );
       if (mounted) {
         setState(() {
-          _actors = result.result;
+          _ticketTypes = result.result;
           _totalCount = result.count ?? 0;
-          _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error loading actors: $e");
+      print("Error loading ticket types: $e");
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _error = "Greška pri učitavanju glumaca: ${e.toString()}";
+          _error = "Greška pri učitavanju tipova karata: ${e.toString()}";
         });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
-
-  void _navigateToActorForm({Actor? actor}) async {
+  void _navigateToForm({TicketType? ticketType}) async {
     final bool? shouldRefresh = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => ActorFormScreen(actor: actor)),
+      MaterialPageRoute(
+        builder: (_) => TicketTypeFormScreen(ticketType: ticketType),
+      ),
     );
-
     if (shouldRefresh == true && mounted) {
-      _currentPage = 1;
-      _loadActors();
+      _loadTicketTypes();
     }
   }
 
-  Future<void> _deleteActor(int actorId) async {
+  Future<void> _deleteTicketType(int ticketTypeId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text("Potvrda brisanja"),
+            title: const Text('Potvrda brisanja'),
             content: const Text(
-              "Da li ste sigurni da želite obrisati ovog glumca? Ova akcija se ne može poništiti.",
+              'Da li ste sigurni da želite obrisati ovaj tip karte? Može biti u upotrebi.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("Otkaži"),
+                child: const Text('Otkaži'),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child: const Text(
-                  "Obriši",
+                  'Obriši',
                   style: TextStyle(color: Colors.red),
                 ),
               ),
@@ -100,26 +102,24 @@ class _ActorListScreenState extends State<ActorListScreen> {
 
     if (confirm == true && mounted) {
       try {
-        setState(() => _isLoading = true);
-        await _actorProvider.delete(actorId);
+        await _ticketTypeProvider.delete(ticketTypeId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Glumac uspješno obrisan."),
+              content: Text('Tip karte uspješno obrisan.'),
               backgroundColor: Colors.green,
             ),
           );
-          if (_actors.length == 1 && _currentPage > 1) {
+          if (_ticketTypes.length == 1 && _currentPage > 1) {
             _currentPage--;
           }
-          _loadActors(showLoading: false);
+          _loadTicketTypes(showLoading: false);
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Greška pri brisanju glumca: ${e.toString()}"),
+              content: Text('Greška pri brisanju: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -142,7 +142,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: "Pretraži po imenu ili prezimenu...",
+                      hintText: 'Pretraži po nazivu tipa karte...',
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -157,32 +157,15 @@ class _ActorListScreenState extends State<ActorListScreen> {
                     ),
                     onSubmitted: (_) {
                       _currentPage = 1;
-                      _loadActors();
+                      _loadTicketTypes();
                     },
                   ),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    _currentPage = 1;
-                    _loadActors();
-                  },
-                  icon: const Icon(Icons.search),
-                  label: const Text("Pretraži"),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _navigateToActorForm();
-                  },
+                  onPressed: () => _navigateToForm(),
                   icon: const Icon(Icons.add),
-                  label: const Text("Dodaj glumca"),
+                  label: const Text('Dodaj tip'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
@@ -206,11 +189,11 @@ class _ActorListScreenState extends State<ActorListScreen> {
                   ),
                 ),
               )
-            else if (_actors.isEmpty)
+            else if (_ticketTypes.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text(
-                    "Nema pronađenih glumaca.",
+                    "Nema pronađenih tipova karata.",
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -241,7 +224,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   columns: const [
                                     DataColumn(
                                       label: Text(
-                                        "ID",
+                                        'ID',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -249,7 +232,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "IME",
+                                        'NAZIV',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -257,7 +240,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "PREZIME",
+                                        'MODIFIKATOR CIJENE',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -265,14 +248,14 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "AKCIJE",
+                                        'AKCIJE',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
                                   ],
-                                  rows: _buildActorRows(),
+                                  rows: _buildRows(),
                                 ),
                               ),
                             ),
@@ -292,7 +275,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage = 1);
-                                        _loadActors();
+                                        _loadTicketTypes();
                                       }
                                       : null,
                             ),
@@ -302,18 +285,18 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage--);
-                                        _loadActors();
+                                        _loadTicketTypes();
                                       }
                                       : null,
                             ),
-                            Text("Stranica $_currentPage od $_totalPages"),
+                            Text('Stranica $_currentPage od $_totalPages'),
                             IconButton(
                               icon: const Icon(Icons.chevron_right),
                               onPressed:
                                   _currentPage < _totalPages
                                       ? () {
                                         setState(() => _currentPage++);
-                                        _loadActors();
+                                        _loadTicketTypes();
                                       }
                                       : null,
                             ),
@@ -325,7 +308,7 @@ class _ActorListScreenState extends State<ActorListScreen> {
                                         setState(
                                           () => _currentPage = _totalPages,
                                         );
-                                        _loadActors();
+                                        _loadTicketTypes();
                                       }
                                       : null,
                             ),
@@ -341,28 +324,26 @@ class _ActorListScreenState extends State<ActorListScreen> {
     );
   }
 
-  List<DataRow> _buildActorRows() {
-    return _actors.map((actor) {
+  List<DataRow> _buildRows() {
+    return _ticketTypes.map((ticketType) {
       return DataRow(
         cells: [
-          DataCell(Text(actor.id?.toString() ?? 'N/A')),
-          DataCell(Text(actor.firstName ?? "Nepoznato")),
-          DataCell(Text(actor.lastName ?? "Nepoznato")),
+          DataCell(Text(ticketType.id?.toString() ?? 'N/A')),
+          DataCell(Text(ticketType.name ?? "Nepoznat naziv")),
+          DataCell(Text(ticketType.priceModifier?.toStringAsFixed(2) ?? "-")),
           DataCell(
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                  tooltip: "Uredi glumca",
-                  onPressed: () {
-                    _navigateToActorForm(actor: actor);
-                  },
+                  tooltip: "Uredi tip karte",
+                  onPressed: () => _navigateToForm(ticketType: ticketType),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  tooltip: "Obriši glumca",
-                  onPressed: () => _deleteActor(actor.id!),
+                  tooltip: "Obriši tip karte",
+                  onPressed: () => _deleteTicketType(ticketType.id!),
                 ),
               ],
             ),

@@ -11,6 +11,7 @@ CinemaHall _$CinemaHallFromJson(Map<String, dynamic> json) => CinemaHall(
   name: json['name'] as String?,
   capacity: (json['capacity'] as num?)?.toInt(),
   cinemaId: (json['cinemaId'] as num?)?.toInt(),
+  cinemaName: json['cinemaName'] as String?,
   seats:
       (json['seats'] as List<dynamic>?)
           ?.map((e) => Seat.fromJson(e as Map<String, dynamic>))
@@ -23,5 +24,6 @@ Map<String, dynamic> _$CinemaHallToJson(CinemaHall instance) =>
       'name': instance.name,
       'capacity': instance.capacity,
       'cinemaId': instance.cinemaId,
+      'cinemaName': instance.cinemaName,
       'seats': instance.seats,
     };

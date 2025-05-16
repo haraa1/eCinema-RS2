@@ -1,137 +1,132 @@
-import 'package:ecinema_desktop/screens/cinema_hall_form_screen.dart';
-import 'package:ecinema_desktop/screens/cinema_hall_seats_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:ecinema_desktop/models/cinema_hall.dart';
-import 'package:ecinema_desktop/providers/cinema_hall_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:ecinema_desktop/models/payment.dart';
+import 'package:ecinema_desktop/providers/payment_provider.dart';
 
-class CinemaHallListScreen extends StatefulWidget {
-  const CinemaHallListScreen({super.key});
+enum PaymentStatusEnum { Pending, Succeeded, Failed, Refunded }
 
-  @override
-  State<CinemaHallListScreen> createState() => _CinemaHallListScreenState();
+String getPaymentStatusName(int? statusValue) {
+  if (statusValue == null) return "Nepoznat";
+  if (statusValue >= 0 && statusValue < PaymentStatusEnum.values.length) {
+    switch (PaymentStatusEnum.values[statusValue]) {
+      case PaymentStatusEnum.Pending:
+        return "Na čekanju";
+      case PaymentStatusEnum.Succeeded:
+        return "Uspjelo";
+      case PaymentStatusEnum.Failed:
+        return "Neuspjelo";
+      case PaymentStatusEnum.Refunded:
+        return "Vraćeno";
+    }
+  }
+  return "Nepoznat ($statusValue)";
 }
 
-class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  final CinemaHallProvider _cinemaHallProvider = CinemaHallProvider();
+class PaymentListScreen extends StatefulWidget {
+  const PaymentListScreen({super.key});
 
-  List<CinemaHall> _cinemaHalls = [];
+  @override
+  State<PaymentListScreen> createState() => _PaymentListScreenState();
+}
+
+class _PaymentListScreenState extends State<PaymentListScreen> {
+  final _paymentProvider = PaymentProvider();
+
+  List<Payment> _payments = [];
+  int _currentPage = 1;
+  final int _pageSize = 15;
+  int _totalCount = 0;
+
   bool _isLoading = true;
   String? _error;
-  int _currentPage = 1;
-  int _pageSize = 10;
-  int _totalCount = 0;
+  int? _selectedStatusFilter;
+
+  final Map<int?, String> _paymentStatusOptions = {
+    null: "Svi statusi",
+    PaymentStatusEnum.Pending.index: getPaymentStatusName(
+      PaymentStatusEnum.Pending.index,
+    ),
+    PaymentStatusEnum.Succeeded.index: getPaymentStatusName(
+      PaymentStatusEnum.Succeeded.index,
+    ),
+    PaymentStatusEnum.Failed.index: getPaymentStatusName(
+      PaymentStatusEnum.Failed.index,
+    ),
+    PaymentStatusEnum.Refunded.index: getPaymentStatusName(
+      PaymentStatusEnum.Refunded.index,
+    ),
+  };
 
   @override
   void initState() {
     super.initState();
-    _loadCinemaHalls();
+    _loadPayments();
   }
 
-  Future<void> _loadCinemaHalls({bool showLoading = true}) async {
+  Future<void> _loadPayments({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
         _isLoading = true;
         _error = null;
       });
     }
+
     try {
-      final result = await _cinemaHallProvider.get(
-        filter: {
-          "Name": _searchController.text.trim(),
-          "Page": _currentPage - 1,
-          "PageSize": _pageSize,
-        },
-      );
+      Map<String, dynamic> filter = {
+        "Page": _currentPage - 1,
+        "PageSize": _pageSize,
+      };
+
+      if (_selectedStatusFilter != null) {
+        filter["PaymentStatus"] = _selectedStatusFilter;
+      }
+
+      final result = await _paymentProvider.get(filter: filter);
       if (mounted) {
         setState(() {
-          _cinemaHalls = result.result;
+          _payments = result.result;
           _totalCount = result.count ?? 0;
-          _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error loading cinema halls: $e");
+      print("Error loading payments: $e");
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = "Greška pri učitavanju dvorana: ${e.toString()}";
-        });
+        _error = "Greška pri učitavanju uplata: ${e.toString()}";
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
   int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
 
-  void _navigateToCinemaHallForm({CinemaHall? cinemaHall}) async {
-    final bool? shouldRefresh = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CinemaHallFormScreen(cinemaHall: cinemaHall),
-      ),
-    );
-    if (shouldRefresh == true && mounted) {
-      _loadCinemaHalls();
-    }
-  }
-
-  void _navigateToCinemaHallSeatsScreen(int cinemaHallId) async {
-    final bool? shouldRefresh = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => CinemaHallSeatsScreen(cinemaHallId: cinemaHallId),
-      ),
-    );
-    if (shouldRefresh == true && mounted) {
-      _loadCinemaHalls();
-    }
-  }
-
-  Future<void> _deleteCinemaHall(int cinemaHallId) async {
+  Future<void> _deletePayment(String paymentId) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text("Potvrda brisanja"),
-            content: const Text(
-              "Da li ste sigurni da želite obrisati ovu dvoranu? Sve povezane projekcije i sjedišta će također biti pogođeni.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("Otkaži"),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  "Obriši",
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          ),
+      builder: (ctx) => AlertDialog(/* ... */),
     );
-
     if (confirm == true && mounted) {
       try {
-        setState(() => _isLoading = true);
-        await _cinemaHallProvider.delete(cinemaHallId);
+        await _paymentProvider.delete(paymentId as int);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Dvorana uspješno obrisana."),
+              content: Text("Uplata uspješno obrisana."),
               backgroundColor: Colors.green,
             ),
           );
-          if (_cinemaHalls.length == 1 && _currentPage > 1) {
+          if (_payments.length == 1 && _currentPage > 1) {
             _currentPage--;
           }
-          _loadCinemaHalls(showLoading: false);
+          _loadPayments(showLoading: false);
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Greška pri brisanju dvorane: ${e.toString()}"),
+              content: Text("Greška pri brisanju uplate: ${e.toString()}"),
               backgroundColor: Colors.red,
             ),
           );
@@ -151,25 +146,35 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _searchController,
+                  flex: 2,
+                  child: DropdownButtonFormField<int>(
                     decoration: InputDecoration(
-                      hintText: "Pretraži dvorane po nazivu...",
-                      prefixIcon: const Icon(Icons.search),
+                      labelText: "Filter po statusu",
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide.none,
                       ),
                       filled: true,
-                      fillColor: Colors.grey[200],
+                      fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
-                        vertical: 0,
                         horizontal: 16,
+                        vertical: 15,
                       ),
                     ),
-                    onSubmitted: (_) {
-                      _currentPage = 1;
-                      _loadCinemaHalls();
+                    value: _selectedStatusFilter,
+                    isExpanded: true,
+                    items:
+                        _paymentStatusOptions.entries.map((entry) {
+                          return DropdownMenuItem<int>(
+                            value: entry.key,
+                            child: Text(entry.value),
+                          );
+                        }).toList(),
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedStatusFilter = newValue;
+                        _currentPage = 1;
+                      });
+                      _loadPayments();
                     },
                   ),
                 ),
@@ -177,25 +182,11 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
                     _currentPage = 1;
-                    _loadCinemaHalls();
+                    _loadPayments();
                   },
-                  icon: const Icon(Icons.search),
-                  label: const Text("Pretraži"),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Osvježi"),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () => _navigateToCinemaHallForm(),
-                  icon: const Icon(Icons.add),
-                  label: const Text("Dodaj dvoranu"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -205,6 +196,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
               ],
             ),
             const SizedBox(height: 20),
+
             if (_isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_error != null)
@@ -216,11 +208,11 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                   ),
                 ),
               )
-            else if (_cinemaHalls.isEmpty)
+            else if (_payments.isEmpty)
               const Expanded(
                 child: Center(
                   child: Text(
-                    "Nema pronađenih dvorana.",
+                    "Nema pronađenih uplata za odabrani status.",
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -241,7 +233,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                   minWidth: constraints.maxWidth,
                                 ),
                                 child: DataTable(
-                                  columnSpacing: 20,
+                                  columnSpacing: 12,
                                   headingRowColor:
                                       MaterialStateColor.resolveWith(
                                         (states) => Theme.of(
@@ -251,7 +243,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                   columns: const [
                                     DataColumn(
                                       label: Text(
-                                        "ID",
+                                        "ID UPLATE",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -259,7 +251,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "NAZIV DVORANE",
+                                        "ID REZ.",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -267,7 +259,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "KAPACITET",
+                                        "IZNOS",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -275,7 +267,31 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        "KINO",
+                                        "STRIPE ID",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "STATUS",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "KREIRANO",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        "USPJELO",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -290,7 +306,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                       ),
                                     ),
                                   ],
-                                  rows: _cinemaHalls.map(_buildRow).toList(),
+                                  rows: _payments.map(_buildRow).toList(),
                                 ),
                               ),
                             ),
@@ -310,7 +326,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage = 1);
-                                        _loadCinemaHalls();
+                                        _loadPayments();
                                       }
                                       : null,
                             ),
@@ -320,7 +336,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                   _currentPage > 1
                                       ? () {
                                         setState(() => _currentPage--);
-                                        _loadCinemaHalls();
+                                        _loadPayments();
                                       }
                                       : null,
                             ),
@@ -331,7 +347,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                   _currentPage < _totalPages
                                       ? () {
                                         setState(() => _currentPage++);
-                                        _loadCinemaHalls();
+                                        _loadPayments();
                                       }
                                       : null,
                             ),
@@ -343,7 +359,7 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
                                         setState(
                                           () => _currentPage = _totalPages,
                                         );
-                                        _loadCinemaHalls();
+                                        _loadPayments();
                                       }
                                       : null,
                             ),
@@ -359,36 +375,91 @@ class _CinemaHallListScreenState extends State<CinemaHallListScreen> {
     );
   }
 
-  DataRow _buildRow(CinemaHall hall) {
+  DataRow _buildRow(Payment payment) {
+    final DateFormat dateTimeFormatter = DateFormat('dd.MM.yyyy HH:mm');
+    final created = dateTimeFormatter.format(payment.createdAt);
+    final succeeded =
+        payment.succeededAt != null
+            ? dateTimeFormatter.format(payment.succeededAt!)
+            : "-";
+
     return DataRow(
       cells: [
-        DataCell(Text(hall.id?.toString() ?? 'N/A')),
-        DataCell(Text(hall.name ?? "Nepoznat naziv")),
-        DataCell(Text(hall.capacity?.toString() ?? "-")),
-        DataCell(Text(hall.cinemaName ?? "N/A")),
+        DataCell(Text(payment.id.toString())),
+        DataCell(Text(payment.bookingId.toString())),
         DataCell(
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                tooltip: "Uredi dvoranu",
-                onPressed: () => _navigateToCinemaHallForm(cinemaHall: hall),
+          Text(
+            "${payment.amount.toStringAsFixed(2)} ${payment.currency.toUpperCase()}",
+          ),
+        ),
+        DataCell(
+          Tooltip(
+            message: payment.stripePaymentIntentId,
+            child: SizedBox(
+              width: 120,
+              child: Text(
+                payment.stripePaymentIntentId,
+                overflow: TextOverflow.ellipsis,
               ),
-              IconButton(
-                icon: Icon(Icons.event_seat, color: Colors.teal),
-                tooltip: "Uredi raspored sjedišta",
-                onPressed: () => _navigateToCinemaHallSeatsScreen(hall.id!),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                tooltip: "Obriši dvoranu",
-                onPressed: () => _deleteCinemaHall(hall.id!),
-              ),
-            ],
+            ),
+          ),
+        ),
+        DataCell(_buildStatusBadge(payment.status)),
+        DataCell(Text(created)),
+        DataCell(Text(succeeded)),
+        DataCell(
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.redAccent),
+            tooltip: "Obriši uplatu (Oprez!)",
+            onPressed: () => _deletePayment(payment.id as String),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(PaymentStatus status) {
+    Color badgeColor;
+    String statusText;
+
+    switch (status) {
+      case PaymentStatus.succeeded:
+        badgeColor = Colors.green;
+        statusText = "Uspjelo";
+        break;
+      case PaymentStatus.pending:
+        badgeColor = Colors.orange;
+        statusText = "Na čekanju";
+        break;
+      case PaymentStatus.failed:
+        badgeColor = Colors.red;
+        statusText = "Neuspjelo";
+        break;
+      case PaymentStatus.refunded:
+        badgeColor = Colors.blueGrey;
+        statusText = "Vraćeno";
+        break;
+      case PaymentStatus.unknown:
+      default:
+        badgeColor = Colors.grey;
+        statusText = "Nepoznat";
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: badgeColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: badgeColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }

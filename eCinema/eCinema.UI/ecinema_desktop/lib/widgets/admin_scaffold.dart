@@ -54,6 +54,34 @@ class AdminScaffold extends StatelessWidget {
                 icon: Icon(Icons.people),
                 label: Text('Korisnici'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.book),
+                label: Text('Rezervacije'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.category),
+                label: Text('Žanrovi'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.payment),
+                label: Text('Uplate'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.chair),
+                label: Text('Tipovi sjedišta'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.card_membership),
+                label: Text('Tipovi karata'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.discount),
+                label: Text('Popusti'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.report),
+                label: Text('Izvještaji'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),

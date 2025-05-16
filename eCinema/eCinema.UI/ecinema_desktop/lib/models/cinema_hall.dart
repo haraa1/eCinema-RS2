@@ -9,9 +9,17 @@ class CinemaHall {
   String? name;
   int? capacity;
   int? cinemaId;
+  String? cinemaName;
   List<Seat>? seats;
 
-  CinemaHall({this.id, this.name, this.capacity, this.cinemaId, this.seats});
+  CinemaHall({
+    this.id,
+    this.name,
+    this.capacity,
+    this.cinemaId,
+    this.cinemaName,
+    this.seats,
+  });
 
   factory CinemaHall.fromJson(Map<String, dynamic> json) =>
       _$CinemaHallFromJson(json);

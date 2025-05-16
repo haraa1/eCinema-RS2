@@ -15,7 +15,7 @@ class _ActorFormScreenState extends State<ActorFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _provider = ActorProvider();
+  final _actorProvider = ActorProvider();
 
   @override
   void initState() {
@@ -34,48 +34,85 @@ class _ActorFormScreenState extends State<ActorFormScreen> {
   }
 
   Future<void> _saveActor() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     final request = {
-      "firstName": _firstNameController.text,
-      "lastName": _lastNameController.text,
+      "firstName": _firstNameController.text.trim(),
+      "lastName": _lastNameController.text.trim(),
     };
 
     try {
       if (widget.actor == null) {
-        await _provider.insert(request);
+        await _actorProvider.insert(request);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Glumac uspješno dodan."),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } else {
-        await _provider.update(widget.actor!.id!, request);
+        await _actorProvider.update(widget.actor!.id!, request);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Podaci o glumcu uspješno ažurirani."),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Greška pri spremanju glumca: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Greška pri spremanju glumca: ${e.toString()}. Pokušajte ponovo.",
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEdit = widget.actor != null;
+    final isEditMode = widget.actor != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? "Uredi glumca" : "Dodaj glumca")),
+      appBar: AppBar(
+        title: Text(isEditMode ? "Uredi glumca" : "Dodaj novog glumca"),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextField("Ime", _firstNameController),
-              _buildTextField("Prezime", _lastNameController),
-              const SizedBox(height: 20),
+              _buildTextField(
+                controller: _firstNameController,
+                label: "Ime",
+                requiredErrorMsg: "Unesite ime glumca.",
+              ),
+              _buildTextField(
+                controller: _lastNameController,
+                label: "Prezime",
+                requiredErrorMsg: "Unesite prezime glumca.",
+              ),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _saveActor,
-                child: Text(isEdit ? "Spremi promjene" : "Dodaj glumca"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Text(isEditMode ? "Spremi promjene" : "Dodaj glumca"),
               ),
             ],
           ),
@@ -84,18 +121,26 @@ class _ActorFormScreenState extends State<ActorFormScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? requiredErrorMsg,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        validator:
-            (value) =>
-                (value == null || value.isEmpty) ? 'Obavezno polje' : null,
+        validator: (value) {
+          if (requiredErrorMsg != null &&
+              (value == null || value.trim().isEmpty)) {
+            return requiredErrorMsg;
+          }
+          return null;
+        },
       ),
     );
   }
