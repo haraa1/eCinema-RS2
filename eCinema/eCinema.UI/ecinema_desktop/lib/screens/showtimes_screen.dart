@@ -225,33 +225,7 @@ class _ShowtimeListScreenState extends State<ShowtimeListScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Tooltip(
-                  message:
-                      _selectedDateFilter == null
-                          ? "Odaberi datum filtera"
-                          : "Filter po datumu: ${DateFormat('dd.MM.yyyy').format(_selectedDateFilter!)} (klikni za promjenu/uklanjanje)",
-                  child: TextButton.icon(
-                    icon: Icon(
-                      _selectedDateFilter == null
-                          ? Icons.calendar_today_outlined
-                          : Icons.event_available,
-                    ),
-                    label: Text(
-                      _selectedDateFilter == null
-                          ? "Datum"
-                          : DateFormat('dd.MM.').format(_selectedDateFilter!),
-                    ),
-                    onPressed: _pickDateFilter,
-                    onLongPress:
-                        _selectedDateFilter != null
-                            ? () {
-                              setState(() => _selectedDateFilter = null);
-                              _currentPage = 1;
-                              _loadShowtimes();
-                            }
-                            : null,
-                  ),
-                ),
+
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: () {
