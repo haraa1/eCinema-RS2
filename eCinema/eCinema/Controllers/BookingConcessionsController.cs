@@ -9,10 +9,10 @@ namespace eCinema.Controllers
     [ApiController]
     [Route("[controller]")]
     public class BookingConcessionsController
-        : BaseCRUDController<BookingConcessionDto, BaseSearchObject, BookingConcessionInsertDto, BookingConcessionUpdateDto>
+        : BaseCRUDController<BookingConcessionDto, BookingConcessionSearchObject, BookingConcessionInsertDto, BookingConcessionUpdateDto>
     {
         public BookingConcessionsController(
-            ILogger<BaseController<BookingConcessionDto, BaseSearchObject>> logger,
+            ILogger<BaseController<BookingConcessionDto, BookingConcessionSearchObject>> logger,
             IBookingConcessionsService service)
             : base(logger, service)
         {

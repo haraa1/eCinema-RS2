@@ -14,12 +14,22 @@ using eCinema.Models.Entities;
 
 namespace eCinema.Services.Services
 {
-    public class SeatTypeService : BaseCRUDService<SeatTypeDto, SeatType, BaseSearchObject, SeatTypeInsert, SeatTypeUpdateDto>, ISeatTypeService
+    public class SeatTypeService : BaseCRUDService<SeatTypeDto, SeatType, NameSearchObject, SeatTypeInsert, SeatTypeUpdateDto>, ISeatTypeService
     {
         public SeatTypeService(eCinemaDbContext context, IMapper mapper) : base(context, mapper)
         {
         }
+        public override IQueryable<SeatType> AddFilter(IQueryable<SeatType> query, NameSearchObject? search = null)
+        {
+            var filteredQuery = base.AddFilter(query, search);
 
+            if (!string.IsNullOrWhiteSpace(search?.Name))
+            {
+                filteredQuery = filteredQuery.Where(x => x.Name.Contains(search.Name));
+            }
+
+            return filteredQuery;
+        }
 
     }
 }

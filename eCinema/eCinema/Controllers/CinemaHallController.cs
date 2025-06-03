@@ -8,12 +8,12 @@ namespace eCinema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class CinemaHallController : BaseCRUDController<CinemaHallDto, BaseSearchObject, CinemaHallInsertDto, CinemaHallUpdateDto>
+    public class CinemaHallController : BaseCRUDController<CinemaHallDto, NameSearchObject, CinemaHallInsertDto, CinemaHallUpdateDto>
     {
         private readonly ICinemaHallService _cinemaHallService;
 
         public CinemaHallController(
-            ILogger<BaseController<CinemaHallDto, BaseSearchObject>> logger,
+            ILogger<BaseController<CinemaHallDto, NameSearchObject>> logger,
             ICinemaHallService cinemaHallService)
             : base(logger, cinemaHallService)
         {
@@ -87,6 +87,13 @@ namespace eCinema.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        [HttpGet("{showtimeId}/seats")]
+        public async Task<ActionResult<List<SeatDto>>> GetSeats(int showtimeId)
+        {
+            var seats = await _cinemaHallService.GetSeatsByShowtime(showtimeId);
+            return Ok(seats);
         }
     }
 }

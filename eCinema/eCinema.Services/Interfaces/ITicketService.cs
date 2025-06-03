@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace eCinema.Services.Interfaces
 {
     public interface ITicketService
-        : ICRUDService<TicketDto, BaseSearchObject, TicketInsertDto, TicketUpdateDto>
+        : ICRUDService<TicketDto, TicketSearchObject, TicketInsertDto, TicketUpdateDto>
     {
     }
 }

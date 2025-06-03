@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Interfaces
 {
-    public interface ICinemaHallService : ICRUDService<CinemaHallDto, BaseSearchObject, CinemaHallInsertDto, CinemaHallUpdateDto>
+    public interface ICinemaHallService : ICRUDService<CinemaHallDto, NameSearchObject, CinemaHallInsertDto, CinemaHallUpdateDto>
     {
         Task<CinemaHallDto> GetById(int id);
         Task<List<SeatDistributionDto>> GetSeatDistribution(int hallId);
@@ -18,5 +18,7 @@ namespace eCinema.Services.Interfaces
         Task AddSeats(int hallId, AddSeatsDto dto);
         Task RemoveSeats(int hallId, RemoveSeatsDto dto);
         Task BulkUpdateSeats(int hallId, BulkUpdateSeatsDto dto);
+        Task<List<SeatDto>> GetSeatsByShowtime(int showtimeId);
+
     }
 }

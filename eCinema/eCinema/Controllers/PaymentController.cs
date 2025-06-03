@@ -13,13 +13,13 @@ namespace eCinema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class PaymentController : BaseCRUDController<PaymentDto, BaseSearchObject, PaymentInsertDto, PaymentUpdateDto>
+    public class PaymentController : BaseCRUDController<PaymentDto, PaymentSearchObject, PaymentInsertDto, PaymentUpdateDto>
     {
         private readonly IPaymentService _service;
         private readonly StripeClient _stripe;
         private readonly StripeSettings _settings;
         public PaymentController(
-            ILogger<BaseController<PaymentDto, BaseSearchObject>> logger,
+            ILogger<BaseController<PaymentDto, PaymentSearchObject>> logger,
             IPaymentService service, IOptions<StripeSettings> opt)
             : base(logger, service)
         {

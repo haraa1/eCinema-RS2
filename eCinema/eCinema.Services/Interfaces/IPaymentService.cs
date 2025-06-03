@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Interfaces
 {
-    public interface IPaymentService : ICRUDService<PaymentDto, BaseSearchObject, PaymentInsertDto, PaymentUpdateDto>
+    public interface IPaymentService : ICRUDService<PaymentDto, PaymentSearchObject, PaymentInsertDto, PaymentUpdateDto>
     {
         Task<(PaymentDto payment, string clientSecret)> CreateIntentAsync(int bookingId);
         Task HandleWebhookAsync(Event stripeEvent);

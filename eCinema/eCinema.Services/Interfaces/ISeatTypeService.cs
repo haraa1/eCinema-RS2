@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Interfaces
 {
-    public interface ISeatTypeService : ICRUDService<SeatTypeDto, BaseSearchObject, SeatTypeInsert, SeatTypeUpdateDto>
+    public interface ISeatTypeService : ICRUDService<SeatTypeDto, NameSearchObject, SeatTypeInsert, SeatTypeUpdateDto>
     {
 
     }

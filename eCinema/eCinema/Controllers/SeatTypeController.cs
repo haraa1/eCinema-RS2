@@ -8,10 +8,10 @@ namespace eCinema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class SeatTypeController : BaseCRUDController<SeatTypeDto, BaseSearchObject, SeatTypeInsert, SeatTypeUpdateDto>
+    public class SeatTypeController : BaseCRUDController<SeatTypeDto, NameSearchObject, SeatTypeInsert, SeatTypeUpdateDto>
     {
         public SeatTypeController(
-            ILogger<BaseController<SeatTypeDto, BaseSearchObject>> logger,
+            ILogger<BaseController<SeatTypeDto, NameSearchObject>> logger,
             ISeatTypeService service)
             : base(logger, service)
         {

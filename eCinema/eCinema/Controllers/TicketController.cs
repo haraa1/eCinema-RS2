@@ -8,10 +8,10 @@ namespace eCinema.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class TicketController : BaseCRUDController<TicketDto, BaseSearchObject, TicketInsertDto, TicketUpdateDto>
+    public class TicketController : BaseCRUDController<TicketDto, TicketSearchObject, TicketInsertDto, TicketUpdateDto>
     {
         public TicketController(
-            ILogger<BaseController<TicketDto, BaseSearchObject>> logger,
+            ILogger<BaseController<TicketDto, TicketSearchObject>> logger,
             ITicketService service)
             : base(logger, service)
         {

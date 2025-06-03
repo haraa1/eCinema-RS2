@@ -13,10 +13,29 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Services
 {
-    public class TicketService : BaseCRUDService<TicketDto, Ticket, BaseSearchObject, TicketInsertDto, TicketUpdateDto>, ITicketService
+    public class TicketService : BaseCRUDService<TicketDto, Ticket, TicketSearchObject, TicketInsertDto, TicketUpdateDto>, ITicketService
     {
         public TicketService(eCinemaDbContext context, IMapper mapper) : base(context, mapper)
         {
+
         }
+
+        public override IQueryable<Ticket> AddInclude(IQueryable<Ticket> q, TicketSearchObject s)
+        {
+            return q.Include(t => t.Booking);
+        }
+        public override IQueryable<Ticket> AddFilter(IQueryable<Ticket> q, TicketSearchObject s)
+        {
+            q = base.AddFilter(q, s);
+
+            if (s.LastNMonths.HasValue)
+            {
+                var cutoff = DateTime.UtcNow.AddMonths(-s.LastNMonths.Value);
+                q = q.Where(t => t.Booking.BookingTime >= cutoff);
+            }
+
+            return q;
+        }
+
     }
 }

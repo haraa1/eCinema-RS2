@@ -13,10 +13,22 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Services
 {
-    public class TicketTypeService : BaseCRUDService<TicketTypeDto, TicketType, BaseSearchObject, TicketTypeInsertDto, TicketTypeUpdateDto>, ITicketTypeService
+    public class TicketTypeService : BaseCRUDService<TicketTypeDto, TicketType, NameSearchObject, TicketTypeInsertDto, TicketTypeUpdateDto>, ITicketTypeService
     {
         public TicketTypeService(eCinemaDbContext context, IMapper mapper) : base(context, mapper)
         {
+        }
+
+        public override IQueryable<TicketType> AddFilter(IQueryable<TicketType> query, NameSearchObject? search = null)
+        {
+            var filteredQuery = base.AddFilter(query, search);
+
+            if (!string.IsNullOrWhiteSpace(search?.Name))
+            {
+                filteredQuery = filteredQuery.Where(x => x.Name.Contains(search.Name));
+            }
+
+            return filteredQuery;
         }
     }
 }
