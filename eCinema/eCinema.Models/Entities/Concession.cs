@@ -4,14 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace eCinema.Models.DTOs.Tickets
+namespace eCinema.Models.Entities
 {
-    public class TicketDto
+    public class Concession
     {
         public int Id { get; set; }
-        public int BookingId { get; set; }
-        public int SeatId { get; set; }
-        public int TicketTypeId { get; set; }
+        public string Name { get; set; }
         public decimal Price { get; set; }
+        public string Description { get; set; }
     }
 }

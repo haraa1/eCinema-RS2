@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eCinema.Models;
 
@@ -11,9 +12,11 @@ using eCinema.Models;
 namespace eCinema.Models.Migrations
 {
     [DbContext(typeof(eCinemaDbContext))]
-    partial class eCinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250613213239_seedtest")]
+    partial class seedtest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -288,6 +291,9 @@ namespace eCinema.Models.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AppliedDiscountId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("BookingTime")
                         .HasColumnType("datetime2");
 
@@ -302,6 +308,8 @@ namespace eCinema.Models.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AppliedDiscountId");
 
                     b.HasIndex("ShowtimeId");
 
@@ -352,6 +360,38 @@ namespace eCinema.Models.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Concessions");
+                });
+
+            modelBuilder.Entity("eCinema.Models.Entities.Discount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("DiscountPercentage")
+                        .HasColumnType("decimal(5, 2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ValidTo")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Discounts");
                 });
 
             modelBuilder.Entity("eCinema.Models.Entities.Role", b =>
@@ -507,6 +547,26 @@ namespace eCinema.Models.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TicketType");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Adult",
+                            PriceModifier = 1.00m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Child",
+                            PriceModifier = 0.75m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Senior",
+                            PriceModifier = 0.80m
+                        });
                 });
 
             modelBuilder.Entity("eCinema.Models.Entities.User", b =>
@@ -672,6 +732,11 @@ namespace eCinema.Models.Migrations
 
             modelBuilder.Entity("eCinema.Models.Entities.Booking", b =>
                 {
+                    b.HasOne("eCinema.Models.Entities.Discount", "AppliedDiscount")
+                        .WithMany()
+                        .HasForeignKey("AppliedDiscountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("eCinema.Models.Entities.Showtime", "Showtime")
                         .WithMany("Bookings")
                         .HasForeignKey("ShowtimeId")
@@ -683,6 +748,8 @@ namespace eCinema.Models.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("AppliedDiscount");
 
                     b.Navigation("Showtime");
 

@@ -10,6 +10,10 @@ namespace eCinema.Models.DTOs.BookingConcessions
     {
         public int BookingId { get; set; }
         public int ConcessionId { get; set; }
+        public string ConcessionName { get; set; }
         public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal TotalPrice { get; set; } 
+        public DateTime BookingTime { get; set; }
     }
 }

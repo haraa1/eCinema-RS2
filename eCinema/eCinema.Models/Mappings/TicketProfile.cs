@@ -26,6 +26,11 @@ namespace eCinema.Models.Mappings
                 .ForMember(dest => dest.Booking, opt => opt.Ignore())
                 .ForMember(dest => dest.Seat, opt => opt.Ignore())
                 .ForMember(dest => dest.TicketType, opt => opt.Ignore());
+
+            CreateMap<Ticket, TicketDto>()
+            .ForMember(d => d.BookingTime,
+             o => o.MapFrom(s => s.Booking.BookingTime));
+
         }
     }
 }
