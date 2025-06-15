@@ -10,7 +10,7 @@ class Booking {
   final int userId;
   final int showtimeId;
   final DateTime bookingTime;
-  final String discountCode;
+  final String? discountCode;
   final List<Ticket> tickets;
   final List<BookingConcession> bookingConcessions;
 
@@ -19,7 +19,7 @@ class Booking {
     required this.userId,
     required this.showtimeId,
     required this.bookingTime,
-    required this.discountCode,
+    this.discountCode,
     required this.tickets,
     required this.bookingConcessions,
   });

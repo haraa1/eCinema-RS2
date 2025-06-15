@@ -11,7 +11,7 @@ Booking _$BookingFromJson(Map<String, dynamic> json) => Booking(
   userId: (json['userId'] as num).toInt(),
   showtimeId: (json['showtimeId'] as num).toInt(),
   bookingTime: DateTime.parse(json['bookingTime'] as String),
-  discountCode: json['discountCode'] as String,
+  discountCode: json['discountCode'] as String?,
   tickets:
       (json['tickets'] as List<dynamic>)
           .map((e) => Ticket.fromJson(e as Map<String, dynamic>))
