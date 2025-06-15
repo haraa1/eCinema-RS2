@@ -31,7 +31,14 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _durationController = TextEditingController();
-  final _languageController = TextEditingController();
+
+  String? _selectedLanguage;
+  final List<String> _languageOptions = const [
+    "English",
+    "Bosnian",
+    "Croatian",
+    "Serbian",
+  ];
 
   DateTime? _releaseDate;
   int _status = 0;
@@ -47,7 +54,9 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
       _titleController.text = m.title ?? "";
       _descriptionController.text = m.description ?? "";
       _durationController.text = m.durationMinutes?.toString() ?? "";
-      _languageController.text = m.language ?? "";
+      if (m.language != null && _languageOptions.contains(m.language)) {
+        _selectedLanguage = m.language;
+      }
       _releaseDate = m.releaseDate;
       _status = m.status ?? 0;
       _pgRating = m.pgRating ?? 0;
@@ -95,7 +104,6 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _durationController.dispose();
-    _languageController.dispose();
     super.dispose();
   }
 
@@ -108,7 +116,7 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
       "title": _titleController.text,
       "description": _descriptionController.text,
       "durationMinutes": int.tryParse(_durationController.text),
-      "language": _languageController.text,
+      "language": _selectedLanguage,
       "releaseDate": _releaseDate?.toIso8601String(),
       "status": _status,
       "pgRating": _pgRating,
@@ -195,14 +203,8 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
                           return null;
                         },
                       ),
-                      _buildTextField(
-                        controller: _languageController,
-                        label: "Jezik",
-
-                        requiredErrorMsg: "Unesite jezik filma.",
-                      ),
+                      _buildLanguageDropdown(),
                       _buildDatePickerField(),
-
                       _buildDropdown(
                         label: "Status",
                         currentValue: _status,
@@ -226,12 +228,9 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
                         onChanged: (val) => setState(() => _pgRating = val!),
                         requiredErrorMsg: "Odaberite PG ocjenu.",
                       ),
-
                       const SizedBox(height: 16),
                       _buildGenreSelectionField(),
-
                       const SizedBox(height: 16),
-
                       Text(
                         "Glumci (opcionalno)",
                         style: Theme.of(context).textTheme.titleMedium,
@@ -262,7 +261,6 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
                               );
                             }).toList(),
                       ),
-
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: _saveMovie,
@@ -304,6 +302,37 @@ class _MovieFormScreenState extends State<MovieFormScreen> {
           }
           if (customValidator != null) {
             return customValidator(value);
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildLanguageDropdown() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        value: _selectedLanguage,
+        decoration: const InputDecoration(
+          labelText: "Jezik",
+          border: OutlineInputBorder(),
+        ),
+        items:
+            _languageOptions.map((String language) {
+              return DropdownMenuItem<String>(
+                value: language,
+                child: Text(language),
+              );
+            }).toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            _selectedLanguage = newValue;
+          });
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return "Odaberite jezik filma.";
           }
           return null;
         },

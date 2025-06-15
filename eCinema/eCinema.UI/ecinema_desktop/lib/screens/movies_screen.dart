@@ -129,14 +129,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
     }
   }
 
-  void _openFilterDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Funkcionalnost filtera još nije implementirana."),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,19 +179,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 ),
                 const SizedBox(width: 10),
 
-                ElevatedButton.icon(
-                  onPressed: _openFilterDialog,
-                  icon: const Icon(Icons.filter_list),
-                  label: const Text("Filteri"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[300],
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: () => _navigateToMovieForm(),
@@ -442,12 +421,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
     Color textColor;
 
     switch (status) {
-      case 0:
+      case 1:
         label = "Aktivan";
         color = Colors.green.shade100;
         textColor = Colors.green.shade800;
         break;
-      case 1:
+      case 0:
         label = "Uskoro";
         color = Colors.orange.shade100;
         textColor = Colors.orange.shade800;

@@ -9,15 +9,11 @@ import 'package:http/http.dart';
 abstract class BaseProvider<T> with ChangeNotifier {
   @protected
   String endpoint = "";
-  @protected
-  static String? baseUrl;
+
+  static late String baseUrl;
 
   BaseProvider(String endpoint) {
     this.endpoint = endpoint;
-    baseUrl = const String.fromEnvironment(
-      "baseUrl",
-      defaultValue: "https://localhost:7012/",
-    );
   }
 
   Future<SearchResult<T>> get({dynamic filter}) async {

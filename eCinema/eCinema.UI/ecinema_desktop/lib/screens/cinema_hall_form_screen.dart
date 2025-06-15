@@ -96,7 +96,7 @@ class _CinemaHallFormScreenState extends State<CinemaHallFormScreen> {
       if (widget.cinemaHall == null) {
         final newHall = await _cinemaHallProvider.insert(request);
 
-        if (newHall.id != null) {
+        if (newHall!.id != null) {
           await _cinemaHallProvider.addSeats(newHall.id!, capacity, 1);
 
           List<SeatDistributionItem> distribution = [
@@ -118,7 +118,7 @@ class _CinemaHallFormScreenState extends State<CinemaHallFormScreen> {
           ];
 
           await _cinemaHallProvider.updateSeatDistribution(
-            newHall.id!,
+            newHall!.id!,
             capacity,
             distribution,
           );
