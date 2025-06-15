@@ -3,7 +3,7 @@ using AutoMapper.QueryableExtensions;
 using eCinema.Model.Entities;
 using eCinema.Models;
 using eCinema.Models.DTOs.Bookings;
-using eCinema.Models.Entities;
+using eCinema.Models.Entities; 
 using eCinema.Models.SearchObjects;
 using eCinema.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -19,20 +19,13 @@ namespace eCinema.Services.Services
     {
         private readonly IHttpContextAccessor _http;
 
-        private readonly ITicketService _ticketService;
-        private readonly IBookingConcessionsService _bookingConcessionsService;
-
         public BookingService(
             eCinemaDbContext context,
             IMapper mapper,
-            IHttpContextAccessor http,
-            ITicketService ticketService,
-            IBookingConcessionsService bookingConcessionsService)
+            IHttpContextAccessor http)
             : base(context, mapper)
         {
             _http = http;
-            _ticketService = ticketService;
-            _bookingConcessionsService = bookingConcessionsService;
         }
 
         public override async Task<BookingDto> Insert(BookingInsertDto insert)
@@ -50,6 +43,30 @@ namespace eCinema.Services.Services
             {
                 var bookingEntity = _mapper.Map<Booking>(insert);
                 bookingEntity.UserId = userId;
+                bookingEntity.BookingTime = DateTime.UtcNow;
+
+                if (!string.IsNullOrWhiteSpace(insert.DiscountCode))
+                {
+                    var discount = await _context.Discounts
+                        .FirstOrDefaultAsync(d => d.Code == insert.DiscountCode && d.IsActive && d.ValidTo >= DateTime.UtcNow);
+
+                    if (discount == null)
+                    {
+                        await transaction.RollbackAsync();
+                        throw new ArgumentException("Invalid or expired discount code provided.");
+                    }
+                    else
+                    {
+                        bookingEntity.AppliedDiscountId = discount.Id;
+                        bookingEntity.DiscountCode = discount.Code;
+                    }
+                }
+                else
+                {
+                    bookingEntity.DiscountCode = null;
+                    bookingEntity.AppliedDiscountId = null;
+                }
+
 
                 if (insert.Tickets != null && insert.Tickets.Any())
                 {
@@ -68,12 +85,15 @@ namespace eCinema.Services.Services
 
                 if (insert.BookingConcessions != null && insert.BookingConcessions.Any())
                 {
+                    bookingEntity.BookingConcessions.Clear();
+
                     foreach (var c in insert.BookingConcessions)
                     {
                         bookingEntity.BookingConcessions.Add(new BookingConcession
                         {
                             ConcessionId = c.ConcessionId,
                             Quantity = c.Quantity
+
                         });
                     }
                 }
@@ -104,6 +124,7 @@ namespace eCinema.Services.Services
                     .ThenInclude(bc => bc.Concession)
                 .Include(b => b.User)
                 .Include(b => b.Showtime)
+                .Include(b => b.AppliedDiscount)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             return _mapper.Map<BookingDto>(booking);
@@ -115,7 +136,8 @@ namespace eCinema.Services.Services
                 .Include(b => b.Tickets)
                 .Include(b => b.BookingConcessions)
                 .Include(b => b.User)
-                .Include(b => b.Showtime);
+                .Include(b => b.Showtime)
+                .Include(b => b.AppliedDiscount);
         }
 
         public async Task<IEnumerable<BookingDto>> GetCurrentUserBookings()
@@ -136,12 +158,12 @@ namespace eCinema.Services.Services
                     .ThenInclude(t => t.Seat)
                 .Include(b => b.BookingConcessions)
                     .ThenInclude(bc => bc.Concession)
-                .Include(b => b.Showtime);
+                .Include(b => b.Showtime)
+                .Include(b => b.AppliedDiscount);
 
             var entities = await query.ToListAsync();
 
             return _mapper.Map<IEnumerable<BookingDto>>(entities);
         }
-
     }
 }
