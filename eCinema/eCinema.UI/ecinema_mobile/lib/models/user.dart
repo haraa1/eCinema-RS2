@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:ecinema_mobile/utils/uint8list_converter.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'user.g.dart';
@@ -16,6 +19,7 @@ class User {
   final String? password;
   @JsonKey(name: 'confirmPassword')
   final String? confirmPassword;
+  final String? profilePicture;
 
   User({
     this.id,
@@ -28,6 +32,7 @@ class User {
     this.roles,
     this.password,
     this.confirmPassword,
+    this.profilePicture,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
