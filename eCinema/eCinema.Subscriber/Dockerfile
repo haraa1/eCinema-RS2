@@ -9,15 +9,11 @@ COPY ["eCinema.Models/eCinema.Models.csproj", "eCinema.Models/"]
 
 RUN dotnet restore "eCinema.sln"
 
-
 COPY . .
-WORKDIR "/src/eCinema"
-RUN dotnet publish "eCinema.csproj" -c Release -o /app/publish --no-restore
+WORKDIR "/src/eCinema.Subscriber"
+RUN dotnet publish "eCinema.Subscriber.csproj" -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-
-EXPOSE 80
-
-ENTRYPOINT ["dotnet", "eCinema.dll"]
+ENTRYPOINT ["dotnet", "eCinema.Subscriber.dll"]

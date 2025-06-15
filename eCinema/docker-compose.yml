@@ -1,0 +1,84 @@
+
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-200023
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${SA_PASSWORD}
+    ports:
+      - "1401:1433"
+    volumes:
+      - sqlserverdata:/var/opt/mssql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
+    ports:
+      - "${RABBIT__PORT}:5672"
+      - "15672:15672"
+
+  api:
+    build:
+      context: .
+      dockerfile: eCinema/Dockerfile
+    container_name: ecinema-api
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      ConnectionStrings__DefaultConnection: ${CONNECTIONSTRINGS__DEFAULTCONNECTION}
+      Rabbit__Host: rabbitmq
+      Rabbit__User: ${RABBIT_USER}
+      Rabbit__Pass: ${RABBIT_PASS}
+      Stripe__SecretKey: ${Stripe__SecretKey}
+      Stripe__PublishableKey: ${Stripe__PublishableKey}
+      Stripe__WebhookSecret: ${Stripe__WebhookSecret}
+      Smtp__Host: ${SMTP_HOST} 
+      Smtp__Port: ${SMTP_PORT}
+      Smtp__User: ${SMTP_USER}
+      Smtp__Pass: ${SMTP_PASS}
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:${API_CONTAINER_PORT}"
+    ports:
+      - "${API_HOST_PORT}:${API_CONTAINER_PORT}"
+
+  stripe-listener:
+    image: stripe/stripe-cli:latest
+    container_name: stripe-listener
+    depends_on:
+      - api
+    command: ["listen", "--skip-verify", "--forward-to", "http://api/Payment/webhook"]
+    environment:
+      - STRIPE_API_KEY=${Stripe__SecretKey}
+
+  subscriber:
+    build:
+      context: .
+      dockerfile: eCinema.Subscriber/Dockerfile
+    container_name: ecinema-subscriber
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Port: ${SMTP_PORT}
+      Smtp__User: ${SMTP_USER}
+      Smtp__Pass: ${SMTP_PASS}
+
+      Email__From: ${EMAIL_FROM} 
+      Email__Subject: ${EMAIL_SUBJECT} 
+
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=200023;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+      Rabbit__Host: rabbitmq
+      Rabbit__User: ${RABBIT_USER}
+      Rabbit__Pass: ${RABBIT_PASS}
+      ASPNETCORE_ENVIRONMENT: Development
+    restart: unless-stopped
+
+volumes:
+  sqlserverdata:
