@@ -8,8 +8,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "eCinema", "eCinema\eCinema.
 		{0CE85BE3-51B1-4A41-B60E-57D7D8616EDD} = {0CE85BE3-51B1-4A41-B60E-57D7D8616EDD}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "eCinema.Models", "eCinema.Model\eCinema.Models.csproj", "{70137C6E-7568-4EA1-8D09-23260E55C8FB}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "eCinema.Services", "eCinema.Services\eCinema.Services.csproj", "{73DFCC5D-48C0-472A-819D-BBB5DF506481}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "eCinema.Subscriber", "eCinema.Subscriber\eCinema.Subscriber.csproj", "{0CE85BE3-51B1-4A41-B60E-57D7D8616EDD}"
@@ -21,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "eCinema.Models", "eCinema.Models\eCinema.Models.csproj", "{6FA7ADCA-816A-446D-AAFA-6DFA1499D775}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,10 +31,6 @@ Global
 		{2121366B-24F8-47C0-8894-874ABBC346C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2121366B-24F8-47C0-8894-874ABBC346C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2121366B-24F8-47C0-8894-874ABBC346C4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{70137C6E-7568-4EA1-8D09-23260E55C8FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{70137C6E-7568-4EA1-8D09-23260E55C8FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{70137C6E-7568-4EA1-8D09-23260E55C8FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{70137C6E-7568-4EA1-8D09-23260E55C8FB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{73DFCC5D-48C0-472A-819D-BBB5DF506481}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{73DFCC5D-48C0-472A-819D-BBB5DF506481}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73DFCC5D-48C0-472A-819D-BBB5DF506481}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -43,6 +39,10 @@ Global
 		{0CE85BE3-51B1-4A41-B60E-57D7D8616EDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CE85BE3-51B1-4A41-B60E-57D7D8616EDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CE85BE3-51B1-4A41-B60E-57D7D8616EDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FA7ADCA-816A-446D-AAFA-6DFA1499D775}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FA7ADCA-816A-446D-AAFA-6DFA1499D775}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FA7ADCA-816A-446D-AAFA-6DFA1499D775}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FA7ADCA-816A-446D-AAFA-6DFA1499D775}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

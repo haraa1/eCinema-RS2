@@ -1,19 +1,30 @@
+using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication;
+using DotNetEnv;
+using EasyNetQ;
+using Stripe;
+
 using eCinema.Models;
 using eCinema.Models.Mappings;
 using eCinema.Services.Services;
 using eCinema.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.OpenApi.Models;
+using eCinema.Services.Recommendations;
+using eCinema.Data.Seeding;
 using eCinema.Authentication;
-using EasyNetQ;
-using Stripe;
-using Microsoft.Extensions.Options;
+
+var projectRoot = AppContext.BaseDirectory;
+
+Env.Load();
+
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddTransient<IMovieService, MovieService>();
-builder.Services.AddTransient<ICinemaService,CinemaService>();
+builder.Services.AddTransient<ICinemaService, CinemaService>();
 builder.Services.AddTransient<IActorService, ActorService>();
 builder.Services.AddTransient<IGenreService, GenreService>();
 builder.Services.AddTransient<ICinemaHallService, CinemaHallService>();
@@ -28,15 +39,15 @@ builder.Services.AddTransient<ITicketTypeService, TicketTypeService>();
 builder.Services.AddTransient<IBookingService, BookingService>();
 builder.Services.AddTransient<IBookingConcessionsService, BookingConcessionsService>();
 builder.Services.AddTransient<IPaymentService, PaymentService>();
-
+builder.Services.AddTransient<IDiscountService, eCinema.Services.Services.DiscountService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddHttpContextAccessor();
-
 
 var rabbitHost = builder.Configuration["Rabbit:Host"] ?? "localhost";
 builder.Services.AddSingleton<IBus>(_ =>
     RabbitHutch.CreateBus($"host={rabbitHost}", cfg => cfg.EnableSystemTextJson()));
 
-// Add services to the container.
+
 builder.Services.AddDbContext<eCinemaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -48,67 +59,82 @@ builder.Services.AddAutoMapper(typeof(TicketTypeProfile));
 builder.Services.AddAutoMapper(typeof(BookingProfile));
 builder.Services.AddAutoMapper(typeof(TicketProfile));
 builder.Services.AddAutoMapper(typeof(PaymentProfile));
+builder.Services.AddAutoMapper(typeof(BookingConcessionsProfile));
 
-builder.Services.Configure<StripeSettings>(
-  builder.Configuration.GetSection("Stripe")
-);
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
 
-builder.Services.AddSingleton<StripeClient>(sp =>
-  new StripeClient(
-    builder.Configuration.GetValue<string>("Stripe:SecretKey")
-  )
-);
+var stripeConfig = builder.Configuration.GetSection("Stripe").Get<StripeSettings>()
+                    ?? throw new InvalidOperationException("Stripe configuration section is missing.");
 
+if (string.IsNullOrWhiteSpace(stripeConfig.SecretKey))
+    throw new ArgumentException("Stripe SecretKey is not set. Make sure you have 'Stripe__SecretKey' in your environment.", nameof(stripeConfig.SecretKey));
+
+if (string.IsNullOrWhiteSpace(stripeConfig.PublishableKey) ||
+    string.IsNullOrWhiteSpace(stripeConfig.WebhookSecret))
+{
+    throw new ArgumentException("Missing Stripe PublishableKey or WebhookSecret in configuration.");
+}
+
+builder.Services.AddSingleton<StripeClient>(_ => new StripeClient(stripeConfig.SecretKey));
 
 builder.Services.AddControllers();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("basicAuth", new Microsoft.OpenApi.Models.OpenApiSecurityScheme()
+    c.AddSecurityDefinition("basicAuth", new OpenApiSecurityScheme
     {
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Type = SecuritySchemeType.Http,
         Scheme = "basic"
     });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement()
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference{Type = ReferenceType.SecurityScheme, Id = "basicAuth"}
+                Reference = new OpenApiReference
+                { Type = ReferenceType.SecurityScheme, Id = "basicAuth" }
             },
-            new string[]{}
-    } });
-
+            Array.Empty<string>()
+        }
+    });
 });
 builder.Services.AddAuthentication("BasicAuthentication")
-    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+       .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(
+           "BasicAuthentication", null);
+
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "eCinema API V1");
 
-app.UseHttpsRedirection();
-
-app.UseCors("AllowFlutterApps"); // Enable CORS with the defined policy
+    c.RoutePrefix = string.Empty;
+});
 
 app.UseAuthentication();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var ctx = scope.ServiceProvider.GetRequiredService<eCinemaDbContext>();
-    ctx.Database.Migrate();
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<eCinemaDbContext>();
+        var webHostEnvironment = services.GetRequiredService<IWebHostEnvironment>();
+        string webRootPath = webHostEnvironment.WebRootPath;
+
+        await dbContext.Database.MigrateAsync();
+        await DataSeeder.SeedAsync(dbContext, webRootPath);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during database seeding.");
+    }
 }
 
 app.Run();

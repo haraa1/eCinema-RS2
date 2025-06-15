@@ -17,7 +17,7 @@ namespace eCinema.Subscriber
 
     public sealed class EmailOptions
     {
-        public required string From { get; init; }
-        public required string Subject { get; init; }
+        public required string From { get; set; }
+        public required string Subject { get; set; }
     }
 }

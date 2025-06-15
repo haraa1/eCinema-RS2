@@ -15,10 +15,11 @@ using Stripe;
 using EasyNetQ.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.ML;
 
 namespace eCinema.Services.Services
 {
-    public class PaymentService : BaseCRUDService<PaymentDto, Payment, BaseSearchObject, PaymentInsertDto, PaymentUpdateDto>, IPaymentService
+    public class PaymentService : BaseCRUDService<PaymentDto, Payment, PaymentSearchObject, PaymentInsertDto, PaymentUpdateDto>, IPaymentService
     {
         private readonly StripeClient _stripe;
         private readonly eCinemaDbContext _context;
@@ -31,18 +32,94 @@ namespace eCinema.Services.Services
 
         }
 
+        public override IQueryable<Payment> AddFilter(
+            IQueryable<Payment> query,
+            PaymentSearchObject search = null)
+        {
+            var filtered = base.AddFilter(query, search);
+
+            if (search?.PaymentStatus != null)
+            {
+                filtered = filtered.Where(p => p.Status == search.PaymentStatus.Value);
+            }
+
+            return filtered;
+        }
+
         public async Task<(PaymentDto payment, string clientSecret)> CreateIntentAsync(int bookingId)
         {
             Booking booking = await _context.Bookings
                                         .Include(b => b.Tickets)
                                         .Include(b => b.BookingConcessions)
                                             .ThenInclude(bc => bc.Concession)
-                                        .SingleAsync(b => b.Id == bookingId);
+                                        .Include(b => b.AppliedDiscount) 
+                                        .SingleOrDefaultAsync(b => b.Id == bookingId);
 
-            decimal amountBam = booking.Tickets.Sum(t => t.Price)
-                              + booking.BookingConcessions.Sum(c => c.Quantity * c.Concession.Price);
+            if (booking == null)
+            {
+                throw new KeyNotFoundException($"Booking with ID {bookingId} not found.");
+            }
 
-            long amountFening = (long)Math.Round(amountBam * 100m, MidpointRounding.AwayFromZero);
+            decimal subtotalAmountBam = booking.Tickets.Sum(t => t.Price);
+
+            if (booking.BookingConcessions != null && booking.BookingConcessions.Any())
+            {
+                foreach (var bc in booking.BookingConcessions)
+                {
+                    if (bc.Concession == null)
+                    {
+                        var concession = await _context.Concessions.FindAsync(bc.ConcessionId);
+                        if (concession == null)
+                        {
+                            throw new Exception($"Concession with ID {bc.ConcessionId} not found for booking concession.");
+                        }
+                        subtotalAmountBam += bc.Quantity * concession.Price;
+                    }
+                    else
+                    {
+                        subtotalAmountBam += bc.Quantity * bc.Concession.Price;
+                    }
+                }
+            }
+
+
+            decimal finalAmountBam = subtotalAmountBam;
+
+            if (booking.AppliedDiscount != null && booking.AppliedDiscount.DiscountPercentage > 0)
+            {
+                decimal discountValue = subtotalAmountBam * (booking.AppliedDiscount.DiscountPercentage / 100.0m);
+                finalAmountBam = subtotalAmountBam - discountValue;
+
+                if (finalAmountBam < 0)
+                {
+                    finalAmountBam = 0;
+                }
+            }
+
+            long amountFening = (long)Math.Round(finalAmountBam * 100m, MidpointRounding.AwayFromZero);
+
+            if (amountFening < 50 && amountFening > 0)
+            {
+
+            }
+            else if (amountFening == 0 && subtotalAmountBam > 0)
+            {
+                var zeroAmountPaymentEntity = new Payment
+                {
+                    BookingId = bookingId,
+                    Amount = 0,
+                    Currency = "bam",
+                    StripePaymentIntentId = $"MANUAL_ZERO_AMOUNT_{Guid.NewGuid()}",
+                    Status = PaymentStatus.Succeeded,
+                    CreatedAt = DateTime.UtcNow,
+                    SucceededAt = DateTime.UtcNow
+                };
+                _context.Payment.Add(zeroAmountPaymentEntity);
+                await _context.SaveChangesAsync();
+                var zeroAmountDto = _mapper.Map<PaymentDto>(zeroAmountPaymentEntity);
+                return (zeroAmountDto, null);
+            }
+
 
             var intentService = new PaymentIntentService(_stripe);
             PaymentIntent intent = await intentService.CreateAsync(new PaymentIntentCreateOptions
@@ -52,6 +129,13 @@ namespace eCinema.Services.Services
                 AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
                 {
                     Enabled = true
+                },
+                Metadata = new Dictionary<string, string>
+                {
+                    { "BookingId", bookingId.ToString() },
+                    { "OriginalAmountBAM", subtotalAmountBam.ToString("F2") },
+                    { "DiscountApplied", booking.AppliedDiscount?.Code ?? "None" },
+                    { "DiscountPercentage", booking.AppliedDiscount?.DiscountPercentage.ToString("F2") ?? "0" }
                 }
             });
 

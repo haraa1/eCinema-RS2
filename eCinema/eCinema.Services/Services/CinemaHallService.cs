@@ -11,30 +11,74 @@ using System.Threading.Tasks;
 using eCinema.Models.DTOs.CinemaHalls;
 using Microsoft.EntityFrameworkCore;
 using eCinema.Models.DTOs.Seats;
+using eCinema.Models.Entities;
 
 namespace eCinema.Services.Services
 {
-    public class CinemaHallService : BaseCRUDService<CinemaHallDto, CinemaHall, BaseSearchObject, CinemaHallInsertDto, CinemaHallUpdateDto>, ICinemaHallService
+    public class CinemaHallService : BaseCRUDService<CinemaHallDto, CinemaHall, NameSearchObject, CinemaHallInsertDto, CinemaHallUpdateDto>, ICinemaHallService
     {
         public CinemaHallService(eCinemaDbContext context, IMapper mapper)
             : base(context, mapper)
         {
         }
-
-        public override IQueryable<CinemaHall> AddInclude(IQueryable<CinemaHall> query, BaseSearchObject search = null)
+        public override IQueryable<CinemaHall> AddFilter(IQueryable<CinemaHall> query, NameSearchObject? search = null)
         {
-            return query.Include(ch => ch.Seats)
-                        .ThenInclude(s => s.SeatType);
+            var filteredQuery = base.AddFilter(query, search);
+
+            if (!string.IsNullOrWhiteSpace(search?.Name))
+            {
+                filteredQuery = filteredQuery.Where(x => x.Name.Contains(search.Name));
+            }
+
+            return filteredQuery;
+        }
+
+        public override IQueryable<CinemaHall> AddInclude(IQueryable<CinemaHall> query, NameSearchObject search = null)
+        {
+            return query
+            .Include(ch => ch.Cinema)
+            .Include(ch => ch.Seats)
+                .ThenInclude(s => s.SeatType);
         }
 
         public override async Task<CinemaHallDto> GetById(int id)
         {
             var entity = await _context.CinemaHalls
-                .Include(ch => ch.Seats)
+            .Include(ch => ch.Cinema)
+           .Include(ch => ch.Seats)
                 .ThenInclude(s => s.SeatType)
-                .FirstOrDefaultAsync(ch => ch.Id == id);
+           .FirstOrDefaultAsync(ch => ch.Id == id);
             return _mapper.Map<CinemaHallDto>(entity);
         }
+
+        public async Task<List<SeatDto>> GetSeatsByShowtime(int showtimeId)
+        {
+            var showtime = await _context.Showtime
+                .Include(st => st.CinemaHall)
+                    .ThenInclude(ch => ch.Seats)
+                .FirstOrDefaultAsync(st => st.Id == showtimeId);
+
+            if (showtime == null)
+                throw new Exception($"Showtime {showtimeId} not found");
+
+            var bookedSeatIds = await _context.Bookings
+                .Where(b => b.ShowtimeId == showtimeId)
+                .SelectMany(b => b.Tickets)
+                .Select(t => t.SeatId)
+                .ToListAsync();
+
+            var seatDtos = showtime.CinemaHall.Seats
+                .Select(s =>
+                {
+                    var dto = _mapper.Map<SeatDto>(s);
+                    dto.isAvailable = !bookedSeatIds.Contains(s.Id);
+                    return dto;
+                })
+                .ToList();
+
+            return seatDtos;
+        }
+
 
         public async Task<List<SeatDistributionDto>> GetSeatDistribution(int hallId)
         {
@@ -106,7 +150,7 @@ namespace eCinema.Services.Services
             if (hall == null)
                 throw new Exception("Cinema hall not found");
 
-            int seatsPerRow = 10;
+            int seatsPerRow = 8;
             for (int i = 0; i < dto.NumberOfSeats; i++)
             {
                 int rowIndex = i / seatsPerRow;

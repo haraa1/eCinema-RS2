@@ -47,20 +47,23 @@ namespace eCinema.Controllers
         {
             var json = await new StreamReader(Request.Body).ReadToEndAsync();
             var sigHeader = Request.Headers["Stripe-Signature"].FirstOrDefault();
-            var secret = _settings.WebhookSecret;
-
             try
             {
-                var stripeEvent = EventUtility.ConstructEvent(json, sigHeader, secret);
+                var stripeEvent = EventUtility.ConstructEvent(json, sigHeader, _settings.WebhookSecret);
                 await _service.HandleWebhookAsync(stripeEvent);
                 return Ok();
             }
             catch (StripeException ex)
             {
-                Console.WriteLine($"❌ Webhook error: {ex.Message}");
-                return BadRequest($"Webhook signature verification failed: {ex.Message}");
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Internal server error processing webhook");
             }
         }
+
+
 
 
 

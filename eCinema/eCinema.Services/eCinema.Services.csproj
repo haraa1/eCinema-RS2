@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="EasyNetQ" Version="7.8.0" />
     <PackageReference Include="EasyNetQ.DI.Microsoft" Version="7.8.0" />
     <PackageReference Include="MailKit" Version="4.12.0" />
@@ -17,11 +18,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.ML" Version="4.0.2" />
     <PackageReference Include="Stripe.net" Version="48.1.0" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\eCinema.Model\eCinema.Models.csproj" />
+    <ProjectReference Include="..\eCinema.Models\eCinema.Models.csproj" />
   </ItemGroup>
 
 </Project>

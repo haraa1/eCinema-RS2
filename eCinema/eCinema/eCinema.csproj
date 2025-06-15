@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="EasyNetQ" Version="7.8.0" />
     <PackageReference Include="EasyNetQ.DI.Microsoft" Version="7.8.0" />
     <PackageReference Include="EasyNetQ.Serialization.SystemTextJson" Version="7.8.0" />
@@ -25,8 +26,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\eCinema.Model\eCinema.Models.csproj" />
+    <ProjectReference Include="..\eCinema.Models\eCinema.Models.csproj" />
     <ProjectReference Include="..\eCinema.Services\eCinema.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\images\oppenheimer.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update=".env">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
