@@ -21,11 +21,13 @@ class LandingShowtimesController extends ChangeNotifier {
   ShowtimesTab _currentTab = ShowtimesTab.active;
   String _search = '';
   String? _selectedCity;
+  String? lastLoadedLanguage;
 
   Future<void> load({String? language}) async {
     if (isLoading) return;
 
     isLoading = true;
+    lastLoadedLanguage = language;
     notifyListeners();
 
     try {
@@ -118,6 +120,7 @@ class LandingShowtimesScreen extends StatefulWidget {
 class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool _isInitialLoad = true;
 
   @override
   void initState() {
@@ -129,15 +132,28 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
       final ctrl = context.read<LandingShowtimesController>();
       ctrl.setTab(ShowtimesTab.values[_tabController.index]);
     });
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProv = context.read<UserProvider>();
-      final ctrl = context.read<LandingShowtimesController>();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final userProv = context.watch<UserProvider>();
+    final ctrl = context.read<LandingShowtimesController>();
+    final newLanguage = userProv.current?.preferredLanguage;
+
+    if (_isInitialLoad) {
+      _isInitialLoad = false;
+
       userProv.loadCurrentUser().then((_) {
-        final lang = userProv.current?.preferredLanguage;
-        ctrl.load(language: lang);
+        final initialLang = userProv.current?.preferredLanguage;
+        if (mounted) {
+          ctrl.load(language: initialLang);
+        }
       });
-    });
+    } else if (newLanguage != null && newLanguage != ctrl.lastLoadedLanguage) {
+      ctrl.load(language: newLanguage);
+    }
   }
 
   @override
@@ -189,15 +205,6 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
         onChanged: ctrl.setSearch,
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.login),
-          onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
-          },
-        ),
         if (ctrl.cityMap.isNotEmpty)
           PopupMenuButton<String>(
             onSelected: (city) => ctrl.setCity(city),
@@ -209,14 +216,56 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
                               PopupMenuItem(value: city, child: Text(city)),
                         )
                         .toList(),
-            child: Row(
-              children: [
-                Text(ctrl.selectedCity),
-                const Icon(Icons.arrow_drop_down),
-                const SizedBox(width: 4),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(ctrl.selectedCity),
+                  const Icon(Icons.arrow_drop_down),
+                ],
+              ),
             ),
           ),
+
+        IconButton(
+          icon: const Icon(Icons.logout),
+          tooltip: 'Odjava',
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext dialogContext) {
+                return AlertDialog(
+                  title: const Text('Odjava'),
+                  content: const Text(
+                    'Jeste li sigurni da se želite odjaviti?',
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Odustani'),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('Odjavi se'),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ],
     );
   }

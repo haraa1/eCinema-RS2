@@ -3,39 +3,32 @@ import 'dart:io';
 import 'dart:async';
 import 'package:ecinema_mobile/utils/utils.dart';
 import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:flutter/foundation.dart';
 
 abstract class BaseProvider<T> with ChangeNotifier {
-  static String? _baseUrl;
-  static String get baseUrl => _baseUrl!;
-  String? _endpoint;
+  @protected
+  String endpoint = "";
+  static late String baseUrl;
+  static late http.Client _httpClient;
 
-  HttpClient client = new HttpClient();
-  IOClient? http;
+  static void initializeHttpClient(http.Client client) {
+    _httpClient = client;
+  }
+
+  http.Client get client => _httpClient;
 
   BaseProvider(String endpoint) {
-    _baseUrl = const String.fromEnvironment(
-      "baseUrl",
-      defaultValue: "https://10.0.2.2:7012/",
-    );
-    print("baseurl: $_baseUrl");
-
-    if (_baseUrl!.endsWith("/") == false) {
-      _baseUrl = _baseUrl! + "/";
-    }
-
-    _endpoint = endpoint;
-    client.badCertificateCallback = (cert, host, port) => true;
-    http = IOClient(client);
+    this.endpoint = endpoint;
   }
 
   Future<T?> getById(int id, [dynamic additionalData]) async {
-    var url = Uri.parse("$_baseUrl$_endpoint/$id");
+    var url = Uri.parse("$baseUrl$endpoint/$id");
 
     Map<String, String> headers = createHeaders();
 
-    var response = await http!.get(url, headers: headers);
+    var response = await http.get(url, headers: headers);
 
     if (isValidResponseCode(response)) {
       var data = jsonDecode(response.body);
@@ -46,7 +39,7 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   Future<List<T>> get([dynamic search]) async {
-    var url = "$_baseUrl$_endpoint";
+    var url = "$baseUrl$endpoint";
 
     if (search != null) {
       String queryString = getQueryString(search);
@@ -56,7 +49,7 @@ abstract class BaseProvider<T> with ChangeNotifier {
     var uri = Uri.parse(url);
 
     Map<String, String> headers = createHeaders();
-    var response = await http!.get(uri, headers: headers);
+    var response = await http.get(uri, headers: headers);
     print("done $response");
     if (isValidResponseCode(response)) {
       var data = jsonDecode(response.body);
@@ -67,12 +60,12 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   Future<T?> insert(dynamic request) async {
-    var url = "$_baseUrl$_endpoint";
+    var url = "$baseUrl$endpoint";
     var uri = Uri.parse(url);
 
     Map<String, String> headers = createHeaders();
     var jsonRequest = jsonEncode(request);
-    var response = await http!.post(uri, headers: headers, body: jsonRequest);
+    var response = await http.post(uri, headers: headers, body: jsonRequest);
 
     if (isValidResponseCode(response)) {
       var data = jsonDecode(response.body);
@@ -83,12 +76,12 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   Future<T?> update(int id, [dynamic request]) async {
-    var url = "$_baseUrl$_endpoint/$id";
+    var url = "$baseUrl$endpoint/$id";
     var uri = Uri.parse(url);
 
     Map<String, String> headers = createHeaders();
 
-    var response = await http!.put(
+    var response = await http.put(
       uri,
       headers: headers,
       body: jsonEncode(request),
@@ -103,13 +96,13 @@ abstract class BaseProvider<T> with ChangeNotifier {
   }
 
   Future<Response> post(String path, dynamic request) async {
-    final url = '$_baseUrl$_endpoint/$path';
+    final url = '$baseUrl$endpoint/$path';
     final uri = Uri.parse(url);
 
     final headers = createHeaders();
     final body = jsonEncode(request);
 
-    return await http!.post(uri, headers: headers, body: body);
+    return await http.post(uri, headers: headers, body: body);
   }
 
   Map<String, String> createHeaders() {

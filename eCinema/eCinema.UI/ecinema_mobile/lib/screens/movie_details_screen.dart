@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ecinema_mobile/providers/base_provider.dart';
 import 'package:ecinema_mobile/screens/ticket_selection_screen.dart';
 import 'package:ecinema_mobile/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     final movie = _showtime!.movie;
     final posterUrl =
         (movie.hasPoster ?? false)
-            ? 'https://10.0.2.2:7012/Movie/${movie.id}/poster'
+            ? '${BaseProvider.baseUrl}Movie/${movie.id}/poster'
             : null;
 
     return Scaffold(

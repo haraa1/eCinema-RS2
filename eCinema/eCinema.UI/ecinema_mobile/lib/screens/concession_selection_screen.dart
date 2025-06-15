@@ -1,14 +1,15 @@
 import 'package:ecinema_mobile/models/payment.dart';
+import 'package:ecinema_mobile/models/payment_intent_response.dart';
 import 'package:ecinema_mobile/screens/booking_success.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:ecinema_mobile/models/concession.dart';
 import 'package:ecinema_mobile/models/booking.dart';
 import 'package:ecinema_mobile/providers/concession_provider.dart';
 import 'package:ecinema_mobile/providers/booking_state.dart';
 import 'package:ecinema_mobile/providers/booking_provider.dart';
 import 'package:ecinema_mobile/providers/payment_provider.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 
 class ConcessionSelectionScreen extends StatefulWidget {
   const ConcessionSelectionScreen({Key? key}) : super(key: key);
@@ -20,22 +21,184 @@ class ConcessionSelectionScreen extends StatefulWidget {
 
 class _ConcessionSelectionScreenState extends State<ConcessionSelectionScreen> {
   final Map<int, int> _selectedQuantities = {};
+  final TextEditingController _discountCodeController = TextEditingController();
   bool _loading = false;
+  String? _discountErrorText;
+
+  @override
+  void dispose() {
+    _discountCodeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _processBookingAndPayment() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _discountErrorText = null;
+    });
+
+    final bookingState = Provider.of<BookingState>(context, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(
+      context,
+      listen: false,
+    );
+    final paymentProvider = Provider.of<PaymentProvider>(
+      context,
+      listen: false,
+    );
+
+    bookingState.selectedConcessions.clear();
+    _selectedQuantities.forEach((key, value) {
+      if (value > 0) {
+        bookingState.selectedConcessions[key] = value;
+      }
+    });
+
+    final bookingPayload = {
+      "showtimeId": bookingState.showtimeId!,
+      "discountCode":
+          _discountCodeController.text.trim().isEmpty
+              ? null
+              : _discountCodeController.text.trim(),
+      "bookingConcessions":
+          bookingState.selectedConcessions.entries
+              .map((e) => {"concessionId": e.key, "quantity": e.value})
+              .toList(),
+      "tickets":
+          bookingState.tickets
+              .map(
+                (t) => {
+                  "seatId": t.seatId,
+                  "ticketTypeId": t.ticketTypeId,
+                  "price": t.price,
+                },
+              )
+              .toList(),
+    };
+    try {
+      print("CONCESSION_DEBUG: Calling bookingProvider.create...");
+      final Booking? booking = await bookingProvider.create(bookingPayload);
+      print(
+        "CONCESSION_DEBUG: bookingProvider.create returned. Booking: ${booking?.id}",
+      );
+
+      if (booking == null || booking.id == null) {
+        print(
+          "CONCESSION_DEBUG: Booking creation failed or booking ID is null.",
+        );
+        throw Exception(
+          "Kreiranje rezervacije nije uspjelo. Molimo pokušajte ponovo.",
+        );
+      }
+      final PaymentIntentResponse paymentIntentResponse = await paymentProvider
+          .createIntent(booking.id!);
+
+      if (paymentIntentResponse.clientSecret == null &&
+          paymentIntentResponse.paymentData.status == PaymentStatus.succeeded) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Rezervacija uspješna (popust primjenjen)!"),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => BookingSuccessScreen(booking: booking),
+          ),
+          (Route<dynamic> route) => false,
+        );
+      } else if (paymentIntentResponse.clientSecret != null) {
+        print(
+          "CONCESSION_DEBUG: Client secret received. Initializing payment sheet.",
+        );
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: paymentIntentResponse.clientSecret!,
+            merchantDisplayName: 'eCinema',
+          ),
+        );
+
+        await Stripe.instance.presentPaymentSheet();
+
+        if (!mounted) return;
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => BookingSuccessScreen(booking: booking),
+          ),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        print(
+          "CONCESSION_DEBUG: Error in payment preparation. ClientSecret is null and status is not succeeded. Status: ${paymentIntentResponse.paymentData.status}",
+        );
+        throw Exception(
+          "Došlo je do greške pri pripremi plaćanja. Status: ${paymentIntentResponse.paymentData.status.toString().split('.').last}",
+        );
+      }
+    } catch (e, s) {
+      if (!mounted) return;
+      String errorMessage = "Došlo je do greške.";
+      if (e is StripeException) {
+        errorMessage = e.error.localizedMessage ?? "Greška pri plaćanju.";
+        print(
+          "CONCESSION_DEBUG: StripeException: Code: ${e.error.code}, Message: ${e.error.message}, Localized: ${e.error.localizedMessage}",
+        );
+      } else if (e is Exception) {
+        final eStr = e.toString().toLowerCase();
+        if (eStr.contains("invalid or expired discount code") ||
+            eStr.contains("neispravan ili istekao kod")) {
+          errorMessage = "Uneseni kod za popust je neispravan ili je istekao.";
+          setState(() {
+            _discountErrorText = errorMessage;
+          });
+        } else {
+          errorMessage = e.toString().replaceFirst("Exception: ", "");
+        }
+      }
+      if (!(_discountErrorText != null && errorMessage == _discountErrorText)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      } else {}
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final bookingState = Provider.of<BookingState>(context, listen: false);
 
+    final concessionProvider = Provider.of<ConcessionProvider>(
+      context,
+      listen: false,
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text("Odaberite hranu i piće")),
       body: FutureBuilder<List<Concession>>(
-        future: ConcessionProvider().get(),
+        future: concessionProvider.get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(child: Text("Failed to load concessions."));
+          if (snapshot.hasError) {
+            return Center(
+              child: Text("Greška pri učitavanju proizvoda: ${snapshot.error}"),
+            );
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("Nema dostupnih proizvoda."));
           }
 
           final concessions = snapshot.data!;
@@ -44,9 +207,9 @@ class _ConcessionSelectionScreenState extends State<ConcessionSelectionScreen> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  "Izabrali ste ${bookingState.tickets.length} karte",
+                  "Izabrali ste ${bookingState.tickets.length} ${bookingState.tickets.length == 1 ? 'kartu' : 'karata'}",
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -58,133 +221,134 @@ class _ConcessionSelectionScreenState extends State<ConcessionSelectionScreen> {
                     final item = concessions[index];
                     final qty = _selectedQuantities[item.id!] ?? 0;
 
-                    return ListTile(
-                      title: Text(
-                        "${item.name} - ${item.price?.toStringAsFixed(2)} KM",
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                      subtitle: Text(item.description ?? ""),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove),
-                            onPressed:
-                                qty > 0
-                                    ? () {
-                                      setState(() {
-                                        _selectedQuantities[item.id!] = qty - 1;
-                                      });
-                                    }
-                                    : null,
-                          ),
-                          Text(qty.toString()),
-                          IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: () {
-                              setState(() {
-                                _selectedQuantities[item.id!] = qty + 1;
-                              });
-                            },
-                          ),
-                        ],
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        title: Text(
+                          item.name ?? "Nepoznat proizvod",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (item.description != null &&
+                                item.description!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(item.description!),
+                              ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                "${item.price?.toStringAsFixed(2) ?? 'N/A'} KM",
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              color:
+                                  qty > 0
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey,
+                              onPressed:
+                                  qty > 0
+                                      ? () {
+                                        setState(() {
+                                          _selectedQuantities[item.id!] =
+                                              qty - 1;
+                                        });
+                                      }
+                                      : null,
+                            ),
+                            Text(
+                              qty.toString(),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add_circle_outline),
+                              color: Theme.of(context).colorScheme.primary,
+                              onPressed: () {
+                                setState(() {
+                                  _selectedQuantities[item.id!] = qty + 1;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     );
+                  },
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: TextField(
+                  controller: _discountCodeController,
+                  decoration: InputDecoration(
+                    labelText: "Unesite kod za popust (opcionalno)",
+                    hintText: "Npr. POPUST20",
+                    border: const OutlineInputBorder(),
+                    errorText: _discountErrorText,
+                    suffixIcon:
+                        _discountCodeController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _discountCodeController.clear();
+                                setState(() {
+                                  _discountErrorText = null;
+                                });
+                              },
+                            )
+                            : null,
+                  ),
+                  onChanged: (text) {
+                    if (_discountErrorText != null) {
+                      setState(() {
+                        _discountErrorText = null;
+                      });
+                    }
                   },
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
-                  onPressed:
-                      _loading
-                          ? null
-                          : () async {
-                            setState(() => _loading = true);
-
-                            bookingState.selectedConcessions.clear();
-                            bookingState.selectedConcessions.addAll(
-                              _selectedQuantities,
-                            );
-
-                            try {
-                              final Booking? booking = await BookingProvider()
-                                  .insert({
-                                    "showtimeId": bookingState.showtimeId!,
-                                    "bookingTime":
-                                        DateTime.now().toIso8601String(),
-                                    "discountCode": "",
-                                    "bookingConcessions":
-                                        bookingState.selectedConcessions.entries
-                                            .map(
-                                              (e) => {
-                                                "concessionId": e.key,
-                                                "quantity": e.value,
-                                              },
-                                            )
-                                            .toList(),
-                                    "tickets":
-                                        bookingState.tickets
-                                            .map(
-                                              (t) => {
-                                                "seatId": t.seatId,
-                                                "ticketTypeId": t.ticketTypeId,
-                                                "price": t.price,
-                                              },
-                                            )
-                                            .toList(),
-                                  });
-                              if (booking?.id == null) {
-                                throw Exception("Booking creation failed.");
-                              }
-                              if (booking == null) {
-                                throw StateError(
-                                  'No booking available to pay for.',
-                                );
-                              }
-                              final Payment intent = await PaymentProvider()
-                                  .createIntent(booking.id!);
-
-                              await Stripe.instance.initPaymentSheet(
-                                paymentSheetParameters:
-                                    SetupPaymentSheetParameters(
-                                      paymentIntentClientSecret:
-                                          intent.clientSecret,
-                                      merchantDisplayName: 'eCinema',
-                                    ),
-                              );
-
-                              await Stripe.instance.presentPaymentSheet();
-
-                              if (!mounted) return;
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => BookingSuccessScreen(
-                                        booking: booking,
-                                      ),
-                                ),
-                              );
-                            } catch (e) {
-                              final message =
-                                  (e is StripeException)
-                                      ? e.error.localizedMessage
-                                      : e.toString();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Payment failed: $message'),
-                                ),
-                              );
-                            } finally {
-                              setState(() => _loading = false);
-                            }
-                          },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    textStyle: const TextStyle(fontSize: 18),
+                  ),
+                  onPressed: _loading ? null : _processBookingAndPayment,
                   child:
                       _loading
                           ? const SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                              strokeWidth: 3,
                               color: Colors.white,
                             ),
                           )

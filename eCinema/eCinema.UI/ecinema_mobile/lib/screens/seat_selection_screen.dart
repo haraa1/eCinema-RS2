@@ -27,18 +27,17 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 
   Future<Map<String, List<Seat>>> _loadGroupedSeats() async {
-    final hallId = widget.showtime.cinemaHall.id;
-    final hall = await CinemaHallProvider().getById(hallId!);
+    final showtimeId = widget.showtime.id;
+
+    final seats = await CinemaHallProvider().getSeatsByShowtime(showtimeId);
 
     final grouped = <String, List<Seat>>{};
-    for (final seat in hall?.seats ?? []) {
-      grouped.putIfAbsent(seat.row, () => []).add(seat);
+    for (final seat in seats) {
+      grouped.putIfAbsent(seat.row ?? 'Unknown', () => []).add(seat);
     }
-
     for (final row in grouped.keys) {
       grouped[row]!.sort((a, b) => (a.number ?? 0).compareTo(b.number ?? 0));
     }
-
     return grouped;
   }
 
@@ -136,55 +135,67 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  ...seats.map((seat) {
-                                    final isSelected = _selectedSeatIds
-                                        .contains(seat.id);
-                                    final isUnavailable =
-                                        seat.isAvailable == null ||
-                                        !seat.isAvailable!;
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        children:
+                                            seats.map((seat) {
+                                              final isSelected =
+                                                  _selectedSeatIds.contains(
+                                                    seat.id,
+                                                  );
+                                              final isUnavailable =
+                                                  seat.isAvailable == null ||
+                                                  !seat.isAvailable!;
 
-                                    Color color;
-                                    if (isUnavailable) {
-                                      color = Colors.grey[400]!;
-                                    } else if (isSelected) {
-                                      color = Colors.blue;
-                                    } else {
-                                      color = Colors.white;
-                                    }
+                                              Color color;
+                                              if (isUnavailable) {
+                                                color = Colors.grey[400]!;
+                                              } else if (isSelected) {
+                                                color = Colors.blue;
+                                              } else {
+                                                color = Colors.white;
+                                              }
 
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 4,
+                                                    ),
+                                                child: GestureDetector(
+                                                  onTap: () => _onSeatTap(seat),
+                                                  child: Container(
+                                                    width: 32,
+                                                    height: 32,
+                                                    alignment: Alignment.center,
+                                                    decoration: BoxDecoration(
+                                                      color: color,
+                                                      border: Border.all(
+                                                        color: Colors.black26,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            4,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      seat.number.toString(),
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color:
+                                                            isUnavailable
+                                                                ? Colors.black26
+                                                                : Colors.black,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
                                       ),
-                                      child: GestureDetector(
-                                        onTap: () => _onSeatTap(seat),
-                                        child: Container(
-                                          width: 32,
-                                          height: 32,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: color,
-                                            border: Border.all(
-                                              color: Colors.black26,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            seat.number.toString(),
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color:
-                                                  isUnavailable
-                                                      ? Colors.black26
-                                                      : Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                    ),
+                                  ),
                                 ],
                               ),
                             );

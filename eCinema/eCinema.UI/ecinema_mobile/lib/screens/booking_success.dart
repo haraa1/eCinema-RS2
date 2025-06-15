@@ -1,3 +1,5 @@
+import 'package:ecinema_mobile/screens/landing_movies_screen.dart';
+import 'package:ecinema_mobile/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:ecinema_mobile/models/booking.dart';
 
@@ -37,7 +39,10 @@ class BookingSuccessScreen extends StatelessWidget {
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => MainScreen()),
+                    (Route<dynamic> route) => false,
+                  );
                 },
                 child: const Text('Povratak na pregled filmova'),
               ),

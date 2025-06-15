@@ -1,3 +1,4 @@
+import 'package:ecinema_mobile/providers/base_provider.dart';
 import 'package:ecinema_mobile/screens/movie_details_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/showtime.dart';
@@ -7,15 +8,10 @@ class ShowtimeCard extends StatelessWidget {
   final Showtime showtime;
   const ShowtimeCard({Key? key, required this.showtime}) : super(key: key);
 
-  static const _apiBase = String.fromEnvironment(
-    "baseUrl",
-    defaultValue: "https://10.0.2.2:7012/",
-  );
-
   String? _fullPosterUrl() {
     final id = showtime.movie.id;
     if (id == null) return null;
-    return '${_apiBase}Movie/$id/poster';
+    return '${BaseProvider.baseUrl}Movie/$id/poster';
   }
 
   Widget _buildPoster() {
