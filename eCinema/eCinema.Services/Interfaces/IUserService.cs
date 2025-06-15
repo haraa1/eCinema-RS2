@@ -17,5 +17,6 @@ namespace eCinema.Services.Interfaces
         Task SetProfilePictureAsync(int id, IFormFile file);
         Task<(byte[] Data, string ContentType)?> GetProfilePictureAsync(int id);
         Task<UserDto> UpdateLanguage(int userId, string language);
+        Task<UserDto> UpdateProfileAsync(int userId, UserProfileUpdateDto dto);
     }
 }

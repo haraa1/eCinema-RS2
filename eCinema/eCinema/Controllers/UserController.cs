@@ -96,5 +96,35 @@ namespace eCinema.Controllers
             var updated = await _userService.UpdateLanguage(userId, dto.PreferredLanguage);
             return Ok(updated);
         }
+
+
+        [Authorize]
+        [HttpPut("me/profile")]
+        public async Task<ActionResult<UserDto>> UpdateMyProfile([FromBody] UserProfileUpdateDto dto)
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(idClaim, out var userId))
+            {
+                return Unauthorized("User ID claim not found or invalid.");
+            }
+
+            try
+            {
+                var updatedUser = await _userService.UpdateProfileAsync(userId, dto);
+                return Ok(updatedUser);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex) 
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+            }
+        }
     }
 }

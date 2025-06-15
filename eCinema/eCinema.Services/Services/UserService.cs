@@ -219,5 +219,64 @@ namespace eCinema.Services.Services
             await _context.SaveChangesAsync();
             return _mapper.Map<UserDto>(user);
         }
+
+        public async Task<UserDto> UpdateProfileAsync(int userId, UserProfileUpdateDto dto)
+        {
+            var user = await _context.User
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found.");
+            }
+
+            bool changed = false;
+
+            if (!string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
+                {
+                    throw new ArgumentException("Current password is required to set a new password.");
+                }
+
+                var currentPasswordHash = GenerateHash(user.PasswordSalt, dto.CurrentPassword);
+                if (currentPasswordHash != user.PasswordHash)
+                {
+                    throw new ArgumentException("Invalid current password.");
+                }
+
+                if (dto.NewPassword != dto.ConfirmNewPassword)
+                {
+                    throw new ArgumentException("New password and confirmation password do not match.");
+                }
+
+                user.PasswordSalt = GenerateSalt();
+                user.PasswordHash = GenerateHash(user.PasswordSalt, dto.NewPassword);
+                changed = true;
+            }
+            else if (!string.IsNullOrWhiteSpace(dto.CurrentPassword) || !string.IsNullOrWhiteSpace(dto.ConfirmNewPassword))
+            {
+                throw new ArgumentException("New password cannot be empty if you intend to change it. Please provide a new password or clear all password fields.");
+            }
+            if (dto.PhoneNumber != null && user.PhoneNumber != dto.PhoneNumber)
+            {
+                user.PhoneNumber = dto.PhoneNumber;
+                changed = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.PreferredLanguage) && user.PreferredLanguage != dto.PreferredLanguage)
+            {
+                user.PreferredLanguage = dto.PreferredLanguage;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                await _context.SaveChangesAsync();
+            }
+            return _mapper.Map<UserDto>(user);
+        }
     }
 }
