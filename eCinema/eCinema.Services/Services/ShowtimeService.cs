@@ -24,12 +24,9 @@ namespace eCinema.Services.Services
         {
             var filtered = base.AddFilter(query, search);
 
-            if (!string.IsNullOrWhiteSpace(search?.Language))
+            if (!string.IsNullOrWhiteSpace(search?.Title))
             {
-                filtered = filtered
-                    .OrderByDescending(st => st.Movie.Language == search.Language)
-                    .ThenBy(st => st.StartTime);
-
+                filtered = filtered.Where(x => x.Movie.Title.Contains(search.Title));
             }
             return filtered;
         }

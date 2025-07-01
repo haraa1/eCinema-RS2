@@ -8,7 +8,7 @@ namespace eCinema.Models.SearchObjects
 {
     public class ShowtimeSearchObject : BaseSearchObject
     {
-        public string? Language { get; set; }
+        public string? Title { get; set; }
         public int? CinemaId { get; set; }
     }
 }

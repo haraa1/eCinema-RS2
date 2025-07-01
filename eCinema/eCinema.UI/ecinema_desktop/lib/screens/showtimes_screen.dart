@@ -81,7 +81,7 @@ class _ShowtimeListScreenState extends State<ShowtimeListScreen> {
       Map<String, dynamic> filter = {
         "Page": _currentPage - 1,
         "PageSize": _pageSize,
-        "MovieTitleContains": _searchController.text.trim(),
+        "Title": _searchController.text.trim(),
       };
       if (_selectedDateFilter != null) {
         filter["Date"] = DateFormat('yyyy-MM-dd').format(_selectedDateFilter!);
