@@ -23,6 +23,18 @@ class LandingShowtimesController extends ChangeNotifier {
   String? _selectedCity;
   String? lastLoadedLanguage;
 
+  void reset() {
+    allShowtimes.clear();
+    showtimes.clear();
+    cityMap.clear();
+    isLoading = false;
+    _currentTab = ShowtimesTab.active;
+    _search = '';
+    _selectedCity = null;
+    lastLoadedLanguage = null;
+    notifyListeners();
+  }
+
   Future<void> load({String? language}) async {
     if (isLoading) return;
 
@@ -232,6 +244,10 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
           icon: const Icon(Icons.logout),
           tooltip: 'Odjava',
           onPressed: () {
+            final userProvider = context.read<UserProvider>();
+            final showtimesController =
+                context.read<LandingShowtimesController>();
+
             showDialog(
               context: context,
               builder: (BuildContext dialogContext) {
@@ -250,6 +266,8 @@ class _LandingShowtimesScreenState extends State<LandingShowtimesScreen>
                     TextButton(
                       child: const Text('Odjavi se'),
                       onPressed: () {
+                        userProvider.logout();
+                        showtimesController.reset();
                         Navigator.of(dialogContext).pop();
 
                         Navigator.of(context).pushAndRemoveUntil(

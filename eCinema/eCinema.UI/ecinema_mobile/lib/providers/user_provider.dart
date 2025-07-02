@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:ecinema_mobile/providers/base_provider.dart';
+import 'package:ecinema_mobile/utils/utils.dart';
 import 'package:http/http.dart' as _client;
 import 'package:ecinema_mobile/models/user.dart';
 import 'package:flutter/foundation.dart';
@@ -161,8 +162,14 @@ class UserProvider extends BaseProvider<User> {
     }
   }
 
+  void logout() {
+    _current = null;
+    Authorization.username = null;
+    Authorization.password = null;
+    notifyListeners();
+  }
+
   void clearCurrentUser() {
-    // Useful for logout
     _current = null;
     notifyListeners();
   }
