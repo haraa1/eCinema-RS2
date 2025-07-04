@@ -39,7 +39,7 @@ class UserProvider extends BaseProvider<User> {
     try {
       final res = await http.get(
         Uri.parse('${BaseProvider.baseUrl}User/me'),
-        headers: createHeaders(),
+        headers: BaseProvider.createHeaders(),
       );
 
       if (res.statusCode == 200) {
@@ -61,7 +61,7 @@ class UserProvider extends BaseProvider<User> {
     final uri = Uri.parse('${BaseProvider.baseUrl}User/me/preferences');
     final resp = await http.patch(
       uri,
-      headers: createHeaders(),
+      headers: BaseProvider.createHeaders(),
       body: jsonEncode({'preferredLanguage': language}),
     );
     if (resp.statusCode == 200) {
@@ -109,7 +109,7 @@ class UserProvider extends BaseProvider<User> {
     final uri = Uri.parse('${BaseProvider.baseUrl}User/me/profile');
     final resp = await http.put(
       uri,
-      headers: createHeaders(),
+      headers: BaseProvider.createHeaders(),
       body: jsonEncode(body),
     );
 
@@ -138,13 +138,13 @@ class UserProvider extends BaseProvider<User> {
     final uri = Uri.parse(
       '${BaseProvider.baseUrl}User/${_current!.id}/profile-picture',
     );
-    final request = http.MultipartRequest('PUT', uri);
+    final request = http.MultipartRequest('POST', uri);
 
-    request.headers.addAll(createHeaders());
+    request.headers.addAll(BaseProvider.createHeaders());
 
     request.files.add(
       await http.MultipartFile.fromPath(
-        'file',
+        'image',
         imageFile.path,
         contentType: MediaType('image', 'jpeg'),
       ),

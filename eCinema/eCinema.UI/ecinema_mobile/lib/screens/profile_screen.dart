@@ -1,5 +1,5 @@
-// profile-screen.dart
-
+import 'package:ecinema_mobile/providers/base_provider.dart';
+import 'package:ecinema_mobile/screens/landing_movies_screen.dart';
 import 'package:ecinema_mobile/widgets/profile_update_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -278,14 +278,17 @@ class _ReservationsTab extends StatelessWidget {
     }
 
     Widget buildAvatar(User user) {
-      Uint8List? bytes;
+      ImageProvider? backgroundImage;
+
       if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
-        try {
-          bytes = base64Decode(user.profilePicture!);
-        } catch (e) {
-          debugPrint("Error decoding base64 profile picture: $e");
-          bytes = null;
-        }
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final imageUrl =
+            '${BaseProvider.baseUrl}User/${user.id}/profile-picture?v=$timestamp';
+
+        backgroundImage = NetworkImage(
+          imageUrl,
+          headers: BaseProvider.createHeaders(),
+        );
       }
 
       return Stack(
@@ -293,10 +296,10 @@ class _ReservationsTab extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundImage: bytes != null ? MemoryImage(bytes) : null,
+            backgroundImage: backgroundImage,
             backgroundColor: Colors.grey.shade300,
             child:
-                bytes == null
+                backgroundImage == null
                     ? Icon(Icons.person, size: 50, color: Colors.grey.shade800)
                     : null,
           ),
