@@ -479,6 +479,9 @@ class _PreferencesTabState extends State<_PreferencesTab> {
                           preferredLanguage: _selectedLanguage!,
                         );
                         if (mounted) {
+                          context.read<LandingShowtimesController>().load(
+                            language: _selectedLanguage,
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Preferirani jezik sačuvan'),
