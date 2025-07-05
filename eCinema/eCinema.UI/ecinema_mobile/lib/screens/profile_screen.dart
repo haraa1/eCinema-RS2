@@ -104,6 +104,8 @@ class ProfileScreenState extends State<ProfileScreen>
       try {
         final imageFile = File(pickedFile.path);
         await userProvider.updateProfilePicture(imageFile);
+
+        await userProvider.loadCurrentUser();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
