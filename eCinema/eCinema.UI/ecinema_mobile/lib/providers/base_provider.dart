@@ -105,7 +105,7 @@ abstract class BaseProvider<T> with ChangeNotifier {
     return await http.post(uri, headers: headers, body: body);
   }
 
-  Map<String, String> createHeaders() {
+  static Map<String, String> createHeaders() {
     String? username = Authorization.username;
     String? password = Authorization.password;
 
@@ -170,18 +170,28 @@ abstract class BaseProvider<T> with ChangeNotifier {
       }
     } else if (response.statusCode == 204) {
       return true;
-    } else if (response.statusCode == 400) {
-      throw Exception("Bad request");
-    } else if (response.statusCode == 401) {
-      throw Exception("Unauthorized");
-    } else if (response.statusCode == 403) {
-      throw Exception("Forbidden");
-    } else if (response.statusCode == 404) {
-      throw Exception("Not found");
+    } else if (response.statusCode >= 400 && response.statusCode < 500) {
+      String errorMessage = "Došlo je do greške.";
+      if (response.body.isNotEmpty) {
+        try {
+          var errorData = jsonDecode(response.body);
+          if (errorData is Map && errorData.containsKey('message')) {
+            errorMessage = errorData['message'];
+          } else {
+            errorMessage = response.body;
+          }
+        } catch (e) {
+          errorMessage = response.body;
+        }
+      } else {
+        errorMessage =
+            response.reasonPhrase ?? "Greška: ${response.statusCode}";
+      }
+      throw Exception(errorMessage);
     } else if (response.statusCode == 500) {
-      throw Exception("Internal server error");
+      throw Exception("Greška na serveru. Molimo pokušajte kasnije.");
     } else {
-      throw Exception("Exception... handle this gracefully");
+      throw Exception("Dogodila se nepoznata greška.");
     }
   }
 }

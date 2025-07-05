@@ -397,6 +397,7 @@ class _PreferencesTabState extends State<_PreferencesTab> {
     'Serbian',
   ];
   String? _selectedLanguage;
+  bool _isSavingNotifications = false;
 
   @override
   void initState() {
@@ -450,6 +451,7 @@ class _PreferencesTabState extends State<_PreferencesTab> {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
             value: _selectedLanguage,
@@ -497,6 +499,54 @@ class _PreferencesTabState extends State<_PreferencesTab> {
                       }
                     },
             child: const Text('Sačuvaj jezik'),
+          ),
+
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+
+          SwitchListTile(
+            title: const Text('Primajte obavijesti putem e-pošte'),
+            value: user.notify,
+            onChanged:
+                _isSavingNotifications
+                    ? null
+                    : (bool value) async {
+                      setState(() {
+                        _isSavingNotifications = true;
+                      });
+                      try {
+                        await userProvider.updateNotificationSettings(value);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Postavke obavijesti su sačuvane.'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('Greška: $e')));
+                          userProvider.loadCurrentUser();
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() {
+                            _isSavingNotifications = false;
+                          });
+                        }
+                      }
+                    },
+            secondary:
+                _isSavingNotifications
+                    ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    )
+                    : const Icon(Icons.email_outlined),
           ),
         ],
       ),

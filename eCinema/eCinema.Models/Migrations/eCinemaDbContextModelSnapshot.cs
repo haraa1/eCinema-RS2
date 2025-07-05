@@ -694,7 +694,7 @@ namespace eCinema.Models.Migrations
                     b.HasOne("eCinema.Model.Entities.Genre", "Genre")
                         .WithMany("MovieGenres")
                         .HasForeignKey("GenreId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("eCinema.Model.Entities.Movie", "Movie")
@@ -719,7 +719,7 @@ namespace eCinema.Models.Migrations
                     b.HasOne("eCinema.Models.Entities.SeatType", "SeatType")
                         .WithMany("Seats")
                         .HasForeignKey("SeatTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CinemaHall");
@@ -808,7 +808,7 @@ namespace eCinema.Models.Migrations
                     b.HasOne("eCinema.Models.Entities.TicketType", "TicketType")
                         .WithMany("Tickets")
                         .HasForeignKey("TicketTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Booking");

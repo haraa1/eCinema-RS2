@@ -278,5 +278,20 @@ namespace eCinema.Services.Services
             }
             return _mapper.Map<UserDto>(user);
         }
+
+        public async Task<UserDto> UpdateNotifyAsync(int userId, bool notify)
+        {
+            var user = await _context.User.FindAsync(userId)
+                       ?? throw new KeyNotFoundException("User not found.");
+
+            if (user.Notify == notify)
+                return _mapper.Map<UserDto>(user);
+
+            user.Notify = notify;
+            _context.Entry(user).Property(u => u.Notify).IsModified = true;
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<UserDto>(user);
+        }
     }
 }

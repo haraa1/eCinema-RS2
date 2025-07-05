@@ -18,5 +18,6 @@ namespace eCinema.Services.Interfaces
         Task<(byte[] Data, string ContentType)?> GetProfilePictureAsync(int id);
         Task<UserDto> UpdateLanguage(int userId, string language);
         Task<UserDto> UpdateProfileAsync(int userId, UserProfileUpdateDto dto);
+        Task<UserDto> UpdateNotifyAsync(int userId, bool notify);
     }
 }

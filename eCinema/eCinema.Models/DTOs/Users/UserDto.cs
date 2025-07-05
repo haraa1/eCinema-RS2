@@ -16,6 +16,7 @@ namespace eCinema.Models.DTOs.Users
         public bool HasPicture { get; set; }
         public string? ProfilePicture { get; set; }
         public string? PreferredLanguage { get; set; }
+        public bool Notify { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
     }
 }

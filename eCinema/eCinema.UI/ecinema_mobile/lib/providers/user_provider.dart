@@ -74,7 +74,7 @@ class UserProvider extends BaseProvider<User> {
     }
   }
 
-  Future<void> updateProfile({
+  Future<bool> updateProfile({
     String? currentPassword,
     String? newPassword,
     String? confirmNewPassword,
@@ -85,12 +85,15 @@ class UserProvider extends BaseProvider<User> {
       throw Exception("User not logged in.");
     }
 
+    bool passwordWasChanged = false;
+
     final Map<String, dynamic> body = {};
     if (currentPassword != null && currentPassword.isNotEmpty) {
       body['currentPassword'] = currentPassword;
     }
     if (newPassword != null && newPassword.isNotEmpty) {
       body['newPassword'] = newPassword;
+      passwordWasChanged = true;
     }
     if (confirmNewPassword != null && confirmNewPassword.isNotEmpty) {
       body['confirmNewPassword'] = confirmNewPassword;
@@ -103,7 +106,7 @@ class UserProvider extends BaseProvider<User> {
     }
 
     if (body.isEmpty) {
-      return;
+      return false;
     }
 
     final uri = Uri.parse('${BaseProvider.baseUrl}User/me/profile');
@@ -115,7 +118,12 @@ class UserProvider extends BaseProvider<User> {
 
     if (resp.statusCode == 200) {
       _current = User.fromJson(jsonDecode(resp.body));
+
+      if (passwordWasChanged) {
+        Authorization.password = newPassword;
+      }
       notifyListeners();
+      return passwordWasChanged;
     } else {
       String errorMessage = 'Failed to update profile';
       try {
@@ -158,6 +166,24 @@ class UserProvider extends BaseProvider<User> {
       final respStr = await response.stream.bytesToString();
       throw Exception(
         'Failed to update profile picture (${response.statusCode}): $respStr',
+      );
+    }
+  }
+
+  Future<void> updateNotificationSettings(bool wantsNotifications) async {
+    final uri = Uri.parse('${BaseProvider.baseUrl}User/me/notify');
+    final resp = await http.patch(
+      uri,
+      headers: BaseProvider.createHeaders(),
+      body: jsonEncode({'notify': wantsNotifications}),
+    );
+
+    if (resp.statusCode == 200) {
+      _current = User.fromJson(jsonDecode(resp.body));
+      notifyListeners();
+    } else {
+      throw Exception(
+        'Failed to update notification settings (${resp.statusCode}): ${resp.body}',
       );
     }
   }
