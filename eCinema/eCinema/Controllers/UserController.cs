@@ -126,5 +126,16 @@ namespace eCinema.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
             }
         }
+
+        [Authorize]
+        [HttpPatch("me/notify")]
+        public async Task<ActionResult<UserDto>> UpdateNotify([FromBody] UserNotifyDto dto)
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(idClaim, out var userId)) return Unauthorized();
+
+            var updated = await _userService.UpdateNotifyAsync(userId, dto.Notify);
+            return Ok(updated);
+        }
     }
 }

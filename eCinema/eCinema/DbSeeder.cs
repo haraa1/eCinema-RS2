@@ -278,7 +278,7 @@ namespace eCinema.Data.Seeding
                 {
                     Title = "Krstarenje džunglom", Description = "Zasnovano na vožnji u tematskom parku Disneyland gdje mali riječni brod vodi grupu putnika kroz džunglu punu opasnih životinja i gmizavaca, ali sa natprirodnim elementom.", DurationMinutes = 127,
                     Language = "Bosanski", ReleaseDate = new DateTime(2021, 7, 30), Status = (Models.Enums.MovieStatus)1, PgRating = (Models.Enums.PgRating)2,
-                    PosterImage = shawshankPoster, 
+                    PosterImage = shawshankPoster,
                     MovieGenres = new List<MovieGenre>
                     {
                         new MovieGenre { Genre = genres.First(g => g.Name == "Avantura") },
@@ -347,9 +347,9 @@ namespace eCinema.Data.Seeding
                     DurationMinutes = 153,
                     Language = "Engleski",
                     ReleaseDate = DateTime.Today.AddDays(15),
-                    Status = (Models.Enums.MovieStatus)0, 
+                    Status = (Models.Enums.MovieStatus)0,
                     PgRating = (Models.Enums.PgRating)2,
-                    PosterImage = oppenheimerPoster, 
+                    PosterImage = oppenheimerPoster,
                     MovieGenres = new List<MovieGenre>
                     {
                         new MovieGenre { Genre = genres.First(g => g.Name == "Naučna fantastika") },
@@ -412,7 +412,7 @@ namespace eCinema.Data.Seeding
             var inception = movies.First(m => m.Title == "Početak");
             var dune = movies.First(m => m.Title == "Dina: Drugi dio");
 
-            var metropolisFutureMovie = movies.First(m => m.Title == "Metropolis: The Future City"); 
+            var metropolisFutureMovie = movies.First(m => m.Title == "Metropolis: The Future City");
             var gothamNowShowingMovie = movies.First(m => m.Title == "Gotham's Shadow");
             for (int i = 1; i <= 30; i++)
             {
@@ -471,7 +471,7 @@ namespace eCinema.Data.Seeding
                         CinemaHallId = cityCenterVipHall.Id,
                         StartTime = currentDay.AddHours(21).AddMinutes(30),
                         EndTime = currentDay.AddHours(21).AddMinutes(30).AddMinutes(shawshank.DurationMinutes),
-                        BasePrice = 25.00m 
+                        BasePrice = 25.00m
                     });
                 }
             }
@@ -523,7 +523,7 @@ namespace eCinema.Data.Seeding
                 {
                     UserId = adminUser.Id,
                     ShowtimeId = adminShowtime.Id,
-                    BookingTime = DateTime.UtcNow.AddMinutes(-30), 
+                    BookingTime = DateTime.UtcNow.AddMinutes(-30),
                     AppliedDiscountId = discounts.First(d => d.Code == "LJETO20").Id,
                     BookingConcessions = new List<BookingConcession>
                     {
@@ -537,6 +537,91 @@ namespace eCinema.Data.Seeding
                 };
                 await AddBookingWithPaymentAsync(context, adminBooking);
             }
+
+            // START: ADDED FINISHED BOOKINGS FOR PREVIOUS MONTHS
+            var inceptionMovie = await context.Movies.FirstAsync(m => m.Title == "Početak");
+            var shawshankMovie = await context.Movies.FirstAsync(m => m.Title == "Iskupljenje u Shawshanku");
+            var historicShowtimeHall = await context.CinemaHalls.Include(h => h.Seats).FirstAsync(h => h.Name == "Sala 1");
+            var historicHallSeats = historicShowtimeHall.Seats.ToList();
+
+            // --- January Booking ---
+            var janShowtime = new Showtime
+            {
+                Movie = inceptionMovie,
+                CinemaHall = historicShowtimeHall,
+                StartTime = new DateTime(DateTime.Now.Year, 1, 15, 19, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(DateTime.Now.Year, 1, 15, 19, 0, 0, DateTimeKind.Utc).AddMinutes(inceptionMovie.DurationMinutes),
+                BasePrice = 10.00m
+            };
+            context.Showtime.Add(janShowtime);
+
+            var janBooking = new Booking
+            {
+                User = regularUser,
+                Showtime = janShowtime,
+                BookingTime = janShowtime.StartTime.AddDays(-3),
+                Tickets = new List<Ticket>
+                {
+                    new Ticket { SeatId = historicHallSeats.First(s => s.Row == "A" && s.Number == 1).Id, TicketTypeId = adultTicketType, Price = janShowtime.BasePrice },
+                    new Ticket { SeatId = historicHallSeats.First(s => s.Row == "A" && s.Number == 2).Id, TicketTypeId = adultTicketType, Price = janShowtime.BasePrice }
+                }
+            };
+            await AddBookingWithPaymentAsync(context, janBooking);
+
+            // --- February Booking ---
+            var febShowtime = new Showtime
+            {
+                Movie = shawshankMovie,
+                CinemaHall = historicShowtimeHall,
+                StartTime = new DateTime(DateTime.Now.Year, 2, 20, 20, 30, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(DateTime.Now.Year, 2, 20, 20, 30, 0, DateTimeKind.Utc).AddMinutes(shawshankMovie.DurationMinutes),
+                BasePrice = 11.00m
+            };
+            context.Showtime.Add(febShowtime);
+
+            var febBooking = new Booking
+            {
+                User = adminUser,
+                Showtime = febShowtime,
+                BookingTime = febShowtime.StartTime.AddDays(-1),
+                AppliedDiscountId = discounts.First(d => d.Code == "DOBRODOSLI10").Id,
+                BookingConcessions = new List<BookingConcession>
+                {
+                    new BookingConcession { ConcessionId = concessions.First(c => c.Name == "Velike kokice").Id, Quantity = 1 }
+                },
+                Tickets = new List<Ticket>
+                {
+                    new Ticket { SeatId = historicHallSeats.First(s => s.Row == "B" && s.Number == 5).Id, TicketTypeId = adultTicketType, Price = febShowtime.BasePrice }
+                }
+            };
+            await AddBookingWithPaymentAsync(context, febBooking);
+
+            // --- March Booking ---
+            var marShowtime = new Showtime
+            {
+                Movie = inceptionMovie,
+                CinemaHall = historicShowtimeHall,
+                StartTime = new DateTime(DateTime.Now.Year, 3, 10, 18, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(DateTime.Now.Year, 3, 10, 18, 0, 0, DateTimeKind.Utc).AddMinutes(inceptionMovie.DurationMinutes),
+                BasePrice = 10.50m
+            };
+            context.Showtime.Add(marShowtime);
+
+            var marBooking = new Booking
+            {
+                User = regularUser,
+                Showtime = marShowtime,
+                BookingTime = marShowtime.StartTime.AddHours(-24),
+                Tickets = new List<Ticket>
+                {
+                    new Ticket { SeatId = historicHallSeats.First(s => s.Row == "G" && s.Number == 10).Id, TicketTypeId = adultTicketType, Price = marShowtime.BasePrice },
+                    new Ticket { SeatId = historicHallSeats.First(s => s.Row == "G" && s.Number == 11).Id, TicketTypeId = adultTicketType, Price = marShowtime.BasePrice },
+                    new Ticket { SeatId = historicHallSeats.First(s => s.Row == "G" && s.Number == 12).Id, TicketTypeId = adultTicketType, Price = marShowtime.BasePrice }
+                }
+            };
+            await AddBookingWithPaymentAsync(context, marBooking);
+            // END: ADDED FINISHED BOOKINGS
+
             await context.SaveChangesAsync();
         }
 
@@ -545,12 +630,15 @@ namespace eCinema.Data.Seeding
             decimal ticketsTotal = booking.Tickets.Sum(t => t.Price);
 
             decimal concessionTotal = 0;
-            foreach (var bc in booking.BookingConcessions)
+            if (booking.BookingConcessions != null)
             {
-                var concession = await context.Concessions.FindAsync(bc.ConcessionId);
-                if (concession != null)
+                foreach (var bc in booking.BookingConcessions)
                 {
-                    concessionTotal += concession.Price * bc.Quantity;
+                    var concession = await context.Concessions.FindAsync(bc.ConcessionId);
+                    if (concession != null)
+                    {
+                        concessionTotal += concession.Price * bc.Quantity;
+                    }
                 }
             }
 
