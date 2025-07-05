@@ -20,7 +20,7 @@ namespace eCinema.Data.Seeding
             var genres = await SeedGenresAsync(context);
             var actors = await SeedActorsAsync(context);
             var cinemas = await SeedCinemasAndHallsAsync(context);
-            var users = await SeedUsersAsync(context);
+            var users = await SeedUsersAsync(context, webRootPath);
             var concessions = await SeedConcessionsAsync(context);
             var discounts = await SeedDiscountsAsync(context);
             var movies = await SeedMoviesAsync(context, genres, actors, webRootPath);
@@ -132,9 +132,23 @@ namespace eCinema.Data.Seeding
             return await context.Cinemas.Include(c => c.CinemaHalls).ThenInclude(ch => ch.Seats).ToListAsync();
         }
 
-        private static async Task<List<User>> SeedUsersAsync(eCinemaDbContext context)
+        private static async Task<List<User>> SeedUsersAsync(eCinemaDbContext context, string webRootPath)
         {
             if (await context.User.AnyAsync()) return await context.User.ToListAsync();
+
+            byte[]? profilePictureBytes = null;
+            try
+            {
+                string imagePath = Path.Combine(webRootPath, "images", "oppenheimer.jpg");
+                if (File.Exists(imagePath))
+                {
+                    profilePictureBytes = await File.ReadAllBytesAsync(imagePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Nije moguće učitati sliku profila za popunjavanje baze: {ex.Message}");
+            }
 
             var adminRole = await context.Roles.FirstAsync(r => r.Name == "Admin");
             var userRole = await context.Roles.FirstAsync(r => r.Name == "User");
@@ -150,6 +164,7 @@ namespace eCinema.Data.Seeding
                     PasswordHash = UserService.GenerateHash(adminSalt, "admin123"),
                     PasswordSalt = adminSalt,
                     PhoneNumber = "111-222-333", CreatedAt = DateTime.UtcNow,
+                    ProfilePicture = profilePictureBytes,
                     UserRoles = new List<UserRole> { new UserRole { RoleId = adminRole.Id } }
                 },
                 new User
@@ -158,6 +173,7 @@ namespace eCinema.Data.Seeding
                     PasswordHash = UserService.GenerateHash(userSalt, "user123"),
                     PasswordSalt = userSalt,
                     PhoneNumber = "444-555-666", CreatedAt = DateTime.UtcNow,
+                    ProfilePicture = profilePictureBytes,
                     UserRoles = new List<UserRole> { new UserRole { RoleId = userRole.Id } }
                 }
             };
