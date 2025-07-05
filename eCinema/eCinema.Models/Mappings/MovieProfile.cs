@@ -27,7 +27,9 @@ namespace eCinema.Models.Mappings
                                    : null));
 
             CreateMap<MovieInsertDto, Movie>();
-            CreateMap<MovieUpdateDto, Movie>();
+            CreateMap<MovieUpdateDto, Movie>()       
+                    .ForMember(dest => dest.MovieActors, opt => opt.Ignore())
+                    .ForMember(dest => dest.MovieGenres, opt => opt.Ignore());
         }
     }
 }

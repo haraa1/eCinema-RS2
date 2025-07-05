@@ -20,7 +20,10 @@ namespace eCinema.Models.Mappings
             .ForMember(dest => dest.Seats, opt => opt.MapFrom(src => src.Seats));
 
             CreateMap<CinemaHallInsertDto, CinemaHall>();
-            CreateMap<CinemaHallUpdateDto, CinemaHall>();
+            CreateMap<CinemaHallUpdateDto, CinemaHall>()
+    .ForMember(dest => dest.CinemaId, opt => opt.MapFrom(src => src.CinemaId));
+
+
         }
 
     }

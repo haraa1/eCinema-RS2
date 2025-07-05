@@ -96,5 +96,56 @@ namespace eCinema.Services.Services
 
             return data == null ? null : (data, "image/jpeg");
         }
+
+        public override async Task<MovieDto> Update(int id, MovieUpdateDto update)
+        {
+            var movie = await _context.Movies
+                .Include(m => m.MovieActors)
+                .Include(m => m.MovieGenres)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (movie == null)
+                throw new KeyNotFoundException($"Movie with ID {id} not found.");
+
+            movie.Title = update.Title;
+            movie.Description = update.Description;
+            movie.DurationMinutes = update.DurationMinutes;
+            movie.Language = update.Language;
+            movie.ReleaseDate = update.ReleaseDate;
+            movie.Status = update.Status;
+            movie.PgRating = update.PgRating;
+
+            if (update.ActorIds != null)
+            {
+                var toRemove = movie.MovieActors
+                    .Where(ma => !update.ActorIds.Contains(ma.ActorId))
+                    .ToList();
+                foreach (var ma in toRemove)
+                    _context.MovieActors.Remove(ma);
+
+                var existingIds = movie.MovieActors.Select(ma => ma.ActorId).ToList();
+                var toAdd = update.ActorIds.Except(existingIds);
+                foreach (var actorId in toAdd)
+                    movie.MovieActors.Add(new MovieActor { MovieId = id, ActorId = actorId });
+            }
+
+            if (update.GenreIds != null)
+            {
+                var toRemove = movie.MovieGenres
+                    .Where(mg => !update.GenreIds.Contains(mg.GenreId))
+                    .ToList();
+                foreach (var mg in toRemove)
+                    _context.MovieGenres.Remove(mg);
+
+                var existingIds = movie.MovieGenres.Select(mg => mg.GenreId).ToList();
+                var toAdd = update.GenreIds.Except(existingIds);
+                foreach (var genreId in toAdd)
+                    movie.MovieGenres.Add(new MovieGenre { MovieId = id, GenreId = genreId });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<MovieDto>(movie);
+        }
     }
 }

@@ -199,5 +199,21 @@ namespace eCinema.Services.Services
             seats.ForEach(s => s.SeatTypeId = dto.NewSeatTypeId);
             await _context.SaveChangesAsync();
         }
+
+        public override async Task<CinemaHallDto> Update(int id, CinemaHallUpdateDto update)
+        {
+            var hall = await _context.CinemaHalls.FindAsync(id);
+            if (hall == null)
+                throw new KeyNotFoundException($"Cinema hall with ID {id} not found.");
+
+            hall.Name = update.Name;
+            hall.Capacity = update.Capacity;
+
+            hall.CinemaId = update.CinemaId;
+
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<CinemaHallDto>(hall);
+        }
     }
 }

@@ -10,5 +10,6 @@ namespace eCinema.Models.DTOs.CinemaHalls
     {
         public string Name { get; set; }
         public int Capacity { get; set; }
+        public int CinemaId { get; set; }
     }
 }

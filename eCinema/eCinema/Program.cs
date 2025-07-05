@@ -14,6 +14,8 @@ using eCinema.Services.Interfaces;
 using eCinema.Services.Recommendations;
 using eCinema.Data.Seeding;
 using eCinema.Authentication;
+using eCinema.Filters;
+using eCinema;
 
 var projectRoot = AppContext.BaseDirectory;
 
@@ -76,8 +78,8 @@ if (string.IsNullOrWhiteSpace(stripeConfig.PublishableKey) ||
 }
 
 builder.Services.AddSingleton<StripeClient>(_ => new StripeClient(stripeConfig.SecretKey));
-
-builder.Services.AddControllers();
+builder.Services.AddControllers(opts =>
+    opts.Filters.Add<BadInputToBadRequestFilter>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -113,6 +115,7 @@ app.UseSwaggerUI(c =>
 
     c.RoutePrefix = string.Empty;
 });
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
