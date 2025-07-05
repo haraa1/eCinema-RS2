@@ -16,6 +16,7 @@ class UserFormScreen extends StatefulWidget {
 
 class _UserFormScreenState extends State<UserFormScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -38,11 +39,17 @@ class _UserFormScreenState extends State<UserFormScreen> {
     super.initState();
     _loadRoles().then((_) {
       if (widget.user != null) {
+        _fullNameController.text = widget.user!.fullName ?? "";
         _usernameController.text = widget.user!.userName ?? "";
         _emailController.text = widget.user!.email ?? "";
         _phoneController.text = widget.user!.phoneNumber ?? "";
 
-        _selectedRoleIds = List<int>.from(widget.user!.roleIds ?? []);
+        final existingNames = widget.user!.roles ?? <String>[];
+        _selectedRoleIds =
+            _roles
+                .where((role) => existingNames.contains(role.name))
+                .map((role) => role.id!)
+                .toList();
         if (mounted) setState(() {});
       }
     });
@@ -74,6 +81,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
 
   @override
   void dispose() {
+    _fullNameController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -88,6 +96,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
     }
 
     Map<String, dynamic> request = {
+      "fullName": _fullNameController.text.trim(),
       "userName": _usernameController.text.trim(),
       "email": _emailController.text.trim(),
       "phoneNumber": _phoneController.text.trim(),
@@ -156,6 +165,11 @@ class _UserFormScreenState extends State<UserFormScreen> {
           child: ListView(
             children: [
               _buildTextField(
+                label: "Puno ime",
+                controller: _fullNameController,
+                requiredErrorMsg: "Unesite puno ime.",
+              ),
+              _buildTextField(
                 label: "Korisničko ime",
                 controller: _usernameController,
                 requiredErrorMsg: "Unesite korisničko ime.",
@@ -176,7 +190,6 @@ class _UserFormScreenState extends State<UserFormScreen> {
                   return null;
                 },
               ),
-
               _buildTextField(
                 label:
                     isEditMode
@@ -194,14 +207,11 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 ),
                 requiredErrorMsg: isEditMode ? null : "Unesite lozinku.",
                 customValidator: (value) {
-                  if (isEditMode && (value == null || value.isEmpty))
+                  if (isEditMode && (value == null || value.isEmpty)) {
                     return null;
+                  }
                   if (value != null && value.isNotEmpty && value.length < 6) {
                     return 'Lozinka mora imati najmanje 6 karaktera.';
-                  }
-
-                  if (_confirmPasswordController.text.isNotEmpty) {
-                    _formKey.currentState?.validate();
                   }
                   return null;
                 },
@@ -222,15 +232,15 @@ class _UserFormScreenState extends State<UserFormScreen> {
                             _obscureConfirmPassword = !_obscureConfirmPassword,
                       ),
                 ),
-
-                requiredErrorMsg:
-                    _passwordController.text.isNotEmpty
-                        ? "Potvrdite lozinku."
-                        : null,
+                requiredErrorMsg: null,
                 customValidator: (value) {
-                  if (_passwordController.text.isNotEmpty &&
-                      value != _passwordController.text) {
-                    return 'Lozinke se ne podudaraju.';
+                  if (_passwordController.text.isNotEmpty) {
+                    if (value == null || value.isEmpty) {
+                      return 'Potvrdite lozinku.';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Lozinke se ne podudaraju.';
+                    }
                   }
                   return null;
                 },
@@ -240,7 +250,6 @@ class _UserFormScreenState extends State<UserFormScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-
                 requiredErrorMsg: "Unesite broj telefona.",
                 customValidator: (value) {
                   if (value == null || value.isEmpty) return null;
@@ -296,12 +305,12 @@ class _UserFormScreenState extends State<UserFormScreen> {
           suffixIcon: suffixIcon,
         ),
         validator: (value) {
-          final val = value?.trim() ?? '';
-          if (requiredErrorMsg != null && val.isEmpty) {
+          final trimmedValue = value?.trim() ?? '';
+          if (requiredErrorMsg != null && trimmedValue.isEmpty) {
             return requiredErrorMsg;
           }
           if (customValidator != null) {
-            return customValidator(val);
+            return customValidator(value);
           }
           return null;
         },

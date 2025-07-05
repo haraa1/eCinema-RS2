@@ -17,7 +17,7 @@ class ShowtimeCard extends StatelessWidget {
   Widget _buildPoster() {
     final movie = showtime.movie;
     final posterUrl = _fullPosterUrl();
-    final headers = MovieProvider().createHeaders();
+    final headers = BaseProvider.createHeaders();
 
     if (movie.hasPoster && posterUrl != null) {
       return Image.network(

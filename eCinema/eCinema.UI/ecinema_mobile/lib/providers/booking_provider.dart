@@ -25,7 +25,7 @@ class BookingProvider extends BaseProvider<Booking> {
 
     try {
       final uri = Uri.parse('${BaseProvider.baseUrl}Booking/me');
-      final res = await _client.get(uri, headers: createHeaders());
+      final res = await _client.get(uri, headers: BaseProvider.createHeaders());
 
       if (res.statusCode == 200) {
         final jsonList = jsonDecode(res.body) as List<dynamic>;

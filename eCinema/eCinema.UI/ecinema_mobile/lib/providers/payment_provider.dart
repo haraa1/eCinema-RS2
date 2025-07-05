@@ -14,7 +14,7 @@ class PaymentProvider extends BaseProvider<Payment> {
   Future<PaymentIntentResponse> createIntent(int bookingId) async {
     final res = await http.post(
       Uri.parse('${BaseProvider.baseUrl}Payment/intent/$bookingId'),
-      headers: createHeaders(),
+      headers: BaseProvider.createHeaders(),
       body: jsonEncode({}),
     );
 

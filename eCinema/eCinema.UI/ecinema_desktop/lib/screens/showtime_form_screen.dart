@@ -37,17 +37,7 @@ class _ShowtimeFormScreenState extends State<ShowtimeFormScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData().then((_) {
-      if (widget.showtime != null) {
-        _selectedMovieId = widget.showtime!.movieId;
-        _selectedCinemaHallId = widget.showtime!.cinemaHallId;
-        _startTime = widget.showtime!.startTime;
-        _endTime = widget.showtime!.endTime;
-        _priceController.text =
-            widget.showtime!.basePrice?.toStringAsFixed(2) ?? '';
-        if (mounted) setState(() {});
-      }
-    });
+    _loadInitialData();
   }
 
   Future<void> _loadInitialData() async {
@@ -62,6 +52,16 @@ class _ShowtimeFormScreenState extends State<ShowtimeFormScreen> {
         setState(() {
           _movies = movieResult.result;
           _cinemaHalls = hallResult.result;
+
+          if (widget.showtime != null) {
+            _selectedMovieId = widget.showtime!.movie!.id;
+            _selectedCinemaHallId = widget.showtime!.cinemaHall!.id;
+            _startTime = widget.showtime!.startTime;
+            _endTime = widget.showtime!.endTime;
+            _priceController.text =
+                widget.showtime!.basePrice?.toStringAsFixed(2) ?? '';
+          }
+
           _isLoadingDropdowns = false;
         });
       }

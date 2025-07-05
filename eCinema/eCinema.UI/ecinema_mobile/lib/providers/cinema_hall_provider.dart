@@ -16,7 +16,7 @@ class CinemaHallProvider extends BaseProvider<CinemaHall> {
       '${BaseProvider.baseUrl}CinemaHall/$showtimeId/seats',
     );
 
-    final response = await http.get(uri, headers: createHeaders());
+    final response = await http.get(uri, headers: BaseProvider.createHeaders());
 
     if (isValidResponseCode(response)) {
       final List jsonList = jsonDecode(response.body);

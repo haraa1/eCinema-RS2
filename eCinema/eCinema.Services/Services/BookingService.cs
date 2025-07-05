@@ -3,7 +3,8 @@ using AutoMapper.QueryableExtensions;
 using eCinema.Model.Entities;
 using eCinema.Models;
 using eCinema.Models.DTOs.Bookings;
-using eCinema.Models.Entities; 
+using eCinema.Models.Entities;
+using eCinema.Models.Messages;
 using eCinema.Models.SearchObjects;
 using eCinema.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -15,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Services
 {
-    public class BookingService : BaseCRUDService<BookingDto, Booking, BaseSearchObject, BookingInsertDto, BookingUpdateDto>, IBookingService
+    public class BookingService : BaseCRUDService<BookingDto, Booking, BookingSearchObject, BookingInsertDto, BookingUpdateDto>, IBookingService
     {
         private readonly IHttpContextAccessor _http;
 
@@ -28,6 +29,28 @@ namespace eCinema.Services.Services
             _http = http;
         }
 
+        public override IQueryable<Booking> AddFilter(IQueryable<Booking> query, BookingSearchObject? s)
+        {
+            if (s == null) return query;
+
+            if (s.UserId.HasValue)
+                query = query.Where(b => b.UserId == s.UserId.Value);
+
+            if (s.ShowtimeId.HasValue)
+                query = query.Where(b => b.ShowtimeId == s.ShowtimeId.Value);
+
+            if (!string.IsNullOrWhiteSpace(s.DiscountCode))
+                query = query.Where(b => b.DiscountCode == s.DiscountCode);
+
+            if (s.BookingTimeFrom.HasValue)
+                query = query.Where(b => b.BookingTime >= s.BookingTimeFrom.Value);
+
+            if (s.BookingTimeTo.HasValue)
+                query = query.Where(b => b.BookingTime <= s.BookingTimeTo.Value);
+
+            return query;
+        }
+
         public override async Task<BookingDto> Insert(BookingInsertDto insert)
         {
             var claimValue = _http.HttpContext?.User?
@@ -36,8 +59,6 @@ namespace eCinema.Services.Services
 
             if (!int.TryParse(claimValue, out var userId))
                 throw new UnauthorizedAccessException("User-id claim missing.");
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
@@ -52,8 +73,7 @@ namespace eCinema.Services.Services
 
                     if (discount == null)
                     {
-                        await transaction.RollbackAsync();
-                        throw new ArgumentException("Invalid or expired discount code provided.");
+                        throw new InvalidDiscountCodeException("Invalid or expired discount code provided.");
                     }
                     else
                     {
@@ -66,7 +86,6 @@ namespace eCinema.Services.Services
                     bookingEntity.DiscountCode = null;
                     bookingEntity.AppliedDiscountId = null;
                 }
-
 
                 if (insert.Tickets != null && insert.Tickets.Any())
                 {
@@ -93,7 +112,6 @@ namespace eCinema.Services.Services
                         {
                             ConcessionId = c.ConcessionId,
                             Quantity = c.Quantity
-
                         });
                     }
                 }
@@ -102,13 +120,18 @@ namespace eCinema.Services.Services
                 await _context.SaveChangesAsync();
 
                 var result = await GetBookingWithDetails(bookingEntity.Id);
-                await transaction.CommitAsync();
-
                 return result;
+            }
+            catch (InvalidDiscountCodeException)
+            {
+                throw;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 throw new Exception($"Error creating booking: {ex.Message}", ex);
             }
         }
@@ -130,7 +153,7 @@ namespace eCinema.Services.Services
             return _mapper.Map<BookingDto>(booking);
         }
 
-        public override IQueryable<Booking> AddInclude(IQueryable<Booking> query, BaseSearchObject? search = null)
+        public override IQueryable<Booking> AddInclude(IQueryable<Booking> query, BookingSearchObject? search = null)
         {
             return query
                 .Include(b => b.Tickets)

@@ -421,12 +421,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
     Color textColor;
 
     switch (status) {
-      case 1:
+      case 0:
         label = "Aktivan";
         color = Colors.green.shade100;
         textColor = Colors.green.shade800;
         break;
-      case 0:
+      case 1:
         label = "Uskoro";
         color = Colors.orange.shade100;
         textColor = Colors.orange.shade800;

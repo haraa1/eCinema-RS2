@@ -156,10 +156,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextButton(
-                          onPressed: () {},
-                          child: const Text('Zaboravili lozinku?'),
-                        ),
-                        TextButton(
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(

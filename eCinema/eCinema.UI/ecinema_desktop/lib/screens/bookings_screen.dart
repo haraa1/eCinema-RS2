@@ -13,7 +13,12 @@ class BookingListScreen extends StatefulWidget {
 
 class _BookingListScreenState extends State<BookingListScreen> {
   final _bookingProvider = BookingProvider();
-  final _searchIdController = TextEditingController();
+
+  final _userIdController = TextEditingController();
+  final _showtimeIdController = TextEditingController();
+  final _discountCodeController = TextEditingController();
+  DateTime? _bookingTimeFrom;
+  DateTime? _bookingTimeTo;
 
   List<Booking> _bookings = [];
   int _currentPage = 1;
@@ -27,6 +32,14 @@ class _BookingListScreenState extends State<BookingListScreen> {
   void initState() {
     super.initState();
     _loadBookings();
+  }
+
+  @override
+  void dispose() {
+    _userIdController.dispose();
+    _showtimeIdController.dispose();
+    _discountCodeController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadBookings({bool showLoading = true}) async {
@@ -43,11 +56,26 @@ class _BookingListScreenState extends State<BookingListScreen> {
         "PageSize": _pageSize,
       };
 
-      if (_searchIdController.text.trim().isNotEmpty) {
-        final bookingId = int.tryParse(_searchIdController.text.trim());
-        if (bookingId != null) {
-          filter["Id"] = bookingId;
+      if (_userIdController.text.trim().isNotEmpty) {
+        final userId = int.tryParse(_userIdController.text.trim());
+        if (userId != null) {
+          filter["UserId"] = userId;
         }
+      }
+      if (_showtimeIdController.text.trim().isNotEmpty) {
+        final showtimeId = int.tryParse(_showtimeIdController.text.trim());
+        if (showtimeId != null) {
+          filter["ShowtimeId"] = showtimeId;
+        }
+      }
+      if (_discountCodeController.text.trim().isNotEmpty) {
+        filter["DiscountCode"] = _discountCodeController.text.trim();
+      }
+      if (_bookingTimeFrom != null) {
+        filter["BookingTimeFrom"] = _bookingTimeFrom!.toIso8601String();
+      }
+      if (_bookingTimeTo != null) {
+        filter["BookingTimeTo"] = _bookingTimeTo!.toIso8601String();
       }
 
       final result = await _bookingProvider.get(filter: filter);
@@ -67,6 +95,57 @@ class _BookingListScreenState extends State<BookingListScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _userIdController.clear();
+      _showtimeIdController.clear();
+      _discountCodeController.clear();
+      _bookingTimeFrom = null;
+      _bookingTimeTo = null;
+      _currentPage = 1;
+    });
+    _loadBookings();
+  }
+
+  Future<void> _selectDateTime(
+    BuildContext context, {
+    required bool isFrom,
+  }) async {
+    final initialDate =
+        (isFrom ? _bookingTimeFrom : _bookingTimeTo) ?? DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate == null || !mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initialDate),
+    );
+
+    if (pickedTime == null) return;
+
+    final finalDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
+      if (isFrom) {
+        _bookingTimeFrom = finalDateTime;
+      } else {
+        _bookingTimeTo = finalDateTime;
+      }
+    });
   }
 
   int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
@@ -132,51 +211,8 @@ class _BookingListScreenState extends State<BookingListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchIdController,
-                    decoration: InputDecoration(
-                      hintText: "Pretraži po ID rezervacije...",
-                      prefixIcon: const Icon(Icons.vpn_key),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 16,
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onSubmitted: (_) {
-                      _currentPage = 1;
-                      _loadBookings();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _currentPage = 1;
-                    _loadBookings();
-                  },
-                  icon: const Icon(Icons.search),
-                  label: const Text("Pretraži"),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            _buildFilterSection(),
             const SizedBox(height: 20),
-
             if (_isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_error != null)
@@ -223,7 +259,7 @@ class _BookingListScreenState extends State<BookingListScreen> {
                                   columns: const [
                                     DataColumn(
                                       label: Text(
-                                        "KORISNIK (ID Rez.)",
+                                        "ID Rezervacije",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -342,6 +378,154 @@ class _BookingListScreenState extends State<BookingListScreen> {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Filteri", style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildFilterTextField(
+              controller: _userIdController,
+              hintText: "ID Korisnika...",
+              icon: Icons.person_outline,
+              keyboardType: TextInputType.number,
+            ),
+            _buildFilterTextField(
+              controller: _showtimeIdController,
+              hintText: "ID Projekcije...",
+              icon: Icons.theaters,
+              keyboardType: TextInputType.number,
+            ),
+            _buildFilterTextField(
+              controller: _discountCodeController,
+              hintText: "Popust kod...",
+              icon: Icons.discount_outlined,
+            ),
+            _buildDatePicker(
+              hintText: 'Rezervacija od...',
+              date: _bookingTimeFrom,
+              onPressed: () => _selectDateTime(context, isFrom: true),
+            ),
+            _buildDatePicker(
+              hintText: 'Rezervacija do...',
+              date: _bookingTimeTo,
+              onPressed: () => _selectDateTime(context, isFrom: false),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() => _currentPage = 1);
+                      _loadBookings();
+                    },
+                    icon: const Icon(Icons.search),
+                    label: const Text("Pretraži"),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  height: 48,
+                  child: TextButton(
+                    onPressed: _clearFilters,
+                    child: const Text("Očisti filtere"),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return SizedBox(
+      width: 220,
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hintText,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.grey[200],
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 16,
+          ),
+        ),
+        keyboardType: keyboardType,
+        onSubmitted: (_) {
+          _currentPage = 1;
+          _loadBookings();
+        },
+      ),
+    );
+  }
+
+  Widget _buildDatePicker({
+    required String hintText,
+    required DateTime? date,
+    required VoidCallback onPressed,
+  }) {
+    final dateFormat = DateFormat('dd.MM.yyyy HH:mm');
+    return SizedBox(
+      width: 220,
+      height: 48,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  date != null ? dateFormat.format(date) : hintText,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color:
+                        date != null
+                            ? Theme.of(context).textTheme.bodyLarge?.color
+                            : Theme.of(context).hintColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -102,14 +102,32 @@ class _PaymentListScreenState extends State<PaymentListScreen> {
 
   int get _totalPages => _totalCount > 0 ? (_totalCount / _pageSize).ceil() : 1;
 
-  Future<void> _deletePayment(String paymentId) async {
+  Future<void> _deletePayment(int paymentId) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(/* ... */),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text("Potvrda brisanja"),
+            content: const Text(
+              "Da li ste sigurni da želite obrisati ovu uplatu? Ova akcija se ne može poništiti.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text("Odustani"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text("Obriši"),
+              ),
+            ],
+          ),
     );
+
     if (confirm == true && mounted) {
       try {
-        await _paymentProvider.delete(paymentId as int);
+        await _paymentProvider.delete(paymentId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -196,7 +214,6 @@ class _PaymentListScreenState extends State<PaymentListScreen> {
               ],
             ),
             const SizedBox(height: 20),
-
             if (_isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_error != null)
@@ -389,9 +406,10 @@ class _PaymentListScreenState extends State<PaymentListScreen> {
         DataCell(Text(payment.bookingId.toString())),
         DataCell(
           Text(
-            "${payment.amount.toStringAsFixed(2)} ${payment.currency.toUpperCase()}",
+            "${(payment.amount / 100.0).toStringAsFixed(2)} ${payment.currency.toUpperCase()}",
           ),
         ),
+
         DataCell(
           Tooltip(
             message: payment.stripePaymentIntentId,
@@ -411,7 +429,7 @@ class _PaymentListScreenState extends State<PaymentListScreen> {
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.redAccent),
             tooltip: "Obriši uplatu (Oprez!)",
-            onPressed: () => _deletePayment(payment.id as String),
+            onPressed: () => _deletePayment(payment.id),
           ),
         ),
       ],

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ecinema_mobile/providers/base_provider.dart';
 import 'package:ecinema_mobile/providers/booking_state.dart';
 import 'package:ecinema_mobile/providers/movie_provider.dart';
 import 'package:http/http.dart' as http;
@@ -31,7 +32,7 @@ Future<void> submitBooking(BookingState state) async {
   try {
     final response = await http.post(
       uri,
-      headers: MovieProvider().createHeaders(),
+      headers: BaseProvider.createHeaders(),
       body: jsonEncode(body),
     );
 

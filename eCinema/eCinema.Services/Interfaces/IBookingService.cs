@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace eCinema.Services.Interfaces
 {
-    public interface IBookingService : ICRUDService<BookingDto, BaseSearchObject, BookingInsertDto, BookingUpdateDto>
+    public interface IBookingService : ICRUDService<BookingDto, BookingSearchObject, BookingInsertDto, BookingUpdateDto>
     {
         Task<IEnumerable<BookingDto>> GetCurrentUserBookings();
     }

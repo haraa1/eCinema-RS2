@@ -21,10 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
 
-    _pages = [
-      const LandingShowtimesScreen(),
-      ProfileScreen(key: _profileScreenKey),
-    ];
+    _pages = [LandingShowtimesScreen(), ProfileScreen(key: _profileScreenKey)];
   }
 
   @override
