@@ -42,44 +42,103 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   }
 
   Future<void> _loadShowtimeDetails() async {
-    final showtime = await _showtimeProvider.getById(widget.showtimeId);
-    if (showtime == null) return;
+    try {
+      final showtime = await _showtimeProvider.getById(widget.showtimeId);
+      if (showtime == null) {
+        setState(() => _loading = false);
+        return;
+      }
 
-    final actorFutures = (showtime.movie.actorIds ?? []).map(
-      (id) async => await _actorProvider.getById(id),
-    );
-    final genreFutures = (showtime.movie.genreIds ?? []).map(
-      (id) async => await _genreProvider.getById(id),
-    );
+      final actorFutures = (showtime.movie.actorIds ?? []).map(
+        (id) async => await _actorProvider.getById(id),
+      );
+      final genreFutures = (showtime.movie.genreIds ?? []).map(
+        (id) async => await _genreProvider.getById(id),
+      );
 
-    final actors = await Future.wait(actorFutures);
-    final genres = await Future.wait(genreFutures);
+      final actors = await Future.wait(actorFutures);
+      final genres = await Future.wait(genreFutures);
 
-    final allRelated = await _showtimeProvider.get({
-      'movieId': showtime.movie.id,
-    });
-    final filteredRelated =
-        allRelated
-            .where(
-              (s) =>
-                  s.movie.id == showtime.movie.id &&
-                  (widget.cinemaId == null || s.cinema.id == widget.cinemaId),
-            )
-            .toList();
+      final allRelated = await _showtimeProvider.get({
+        'movieId': showtime.movie.id,
+      });
+      final filteredRelated =
+          allRelated
+              .where(
+                (s) =>
+                    s.movie.id == showtime.movie.id &&
+                    (widget.cinemaId == null || s.cinema.id == widget.cinemaId),
+              )
+              .toList();
 
-    setState(() {
-      _showtime = showtime;
-      _actors = actors.whereType<Actor>().toList();
-      _genres = genres.whereType<Genre>().toList();
-      _relatedShowtimes = filteredRelated;
-      _loading = false;
-    });
+      DateTime firstAvailableDate = _selectedDate;
+      final today = DateTime.now();
+      for (int i = 0; i < 7; i++) {
+        final dateToCheck = today.add(Duration(days: i));
+        final hasShowings = filteredRelated.any((s) {
+          final showtimeDate = s.startTime;
+          return showtimeDate.year == dateToCheck.year &&
+              showtimeDate.month == dateToCheck.month &&
+              showtimeDate.day == dateToCheck.day;
+        });
+
+        if (hasShowings) {
+          firstAvailableDate = dateToCheck;
+          break;
+        }
+      }
+
+      setState(() {
+        _showtime = showtime;
+        _actors = actors.whereType<Actor>().toList();
+        _genres = genres.whereType<Genre>().toList();
+        _relatedShowtimes = filteredRelated;
+        _selectedDate = firstAvailableDate;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+      print("Error loading showtime details: $e");
+    }
+  }
+
+  int _getShowingsCountForDate(DateTime date) {
+    return _relatedShowtimes.where((s) {
+      final showtimeDate = s.startTime;
+      return showtimeDate.year == date.year &&
+          showtimeDate.month == date.month &&
+          showtimeDate.day == date.day;
+    }).length;
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading)
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    if (_showtime == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Greška pri učitavanju detalja.'),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() => _loading = true);
+                  _loadShowtimeDetails();
+                },
+                child: const Text('Pokušaj ponovo'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final movie = _showtime!.movie;
     final posterUrl =
@@ -156,7 +215,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   Widget _buildDateSelector() {
     final now = DateTime.now();
     return SizedBox(
-      height: 40,
+      height: 48,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: 7,
@@ -166,13 +225,41 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
               _selectedDate.day == date.day &&
               _selectedDate.month == date.month &&
               _selectedDate.year == date.year;
+
+          final showingsCount = _getShowingsCountForDate(date);
+          final hasShowings = showingsCount > 0;
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: Text('${date.day}.${date.month}.'),
+              label: Text(
+                '${date.day}.${date.month}. ${hasShowings ? '($showingsCount)' : ''}',
+              ),
               selected: isSelected,
+              backgroundColor: !hasShowings ? Colors.grey[300] : null,
+              labelStyle:
+                  !hasShowings ? TextStyle(color: Colors.grey[600]) : null,
               onSelected: (_) {
-                setState(() => _selectedDate = date);
+                if (hasShowings) {
+                  setState(() => _selectedDate = date);
+                } else {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (BuildContext ctx) => AlertDialog(
+                          title: const Text('Nema projekcija'),
+                          content: const Text(
+                            'Za odabrani datum nema dostupnih projekcija. Molimo odaberite drugi datum.',
+                          ),
+                          actions: [
+                            TextButton(
+                              child: const Text('U redu'),
+                              onPressed: () => Navigator.of(ctx).pop(),
+                            ),
+                          ],
+                        ),
+                  );
+                }
               },
             ),
           );
@@ -182,12 +269,30 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   }
 
   List<Widget> _buildGroupedShowtimes() {
-    final filtered = _relatedShowtimes.where(
-      (s) =>
-          s.startTime.year == _selectedDate.year &&
-          s.startTime.month == _selectedDate.month &&
-          s.startTime.day == _selectedDate.day,
-    );
+    final filtered =
+        _relatedShowtimes
+            .where(
+              (s) =>
+                  s.startTime.year == _selectedDate.year &&
+                  s.startTime.month == _selectedDate.month &&
+                  s.startTime.day == _selectedDate.day,
+            )
+            .toList();
+
+    if (filtered.isEmpty) {
+      return [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 32.0),
+          child: Center(
+            child: Text(
+              'Nema dostupnih projekcija za odabrani datum.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ),
+        ),
+      ];
+    }
 
     final grouped = <String, List<Showtime>>{};
     for (final s in filtered) {
